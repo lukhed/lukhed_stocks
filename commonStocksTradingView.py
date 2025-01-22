@@ -20,9 +20,9 @@ class TradingView:
                                  "Perf.3M", "Perf.6M", "description", "type", "subtype", "update_mode", "pricescale",
                                  "minmov", "fractional", "minmove2", "currency", "fundamental_currency_code"]
         self.index_lookup = {
-            "dow": "DJ:DJI",  # Down Jowns Industrial average (30 stocks)
-            "nasdaq": "NASDAQ:IXIC",  # Nasdaq Composite (all stocks in nasdaq)
-            "nasdaq 100": "NASDAQ:NDX",  # Nasdaq 100 (~100 stocks)
+            "dow": "DJ:DJI",                                    # Down Jowns Industrial average (30 stocks)
+            "nasdaq": "NASDAQ:IXIC",                            # Nasdaq Composite (all stocks in nasdaq)
+            "nasdaq 100": "NASDAQ:NDX",                         # Nasdaq 100 (~100 stocks)
             "nasdaq bank": "NASDAQ:BANK",
             "nasdaq biotech": "NASDAQ:NBI",
             "nasdaq computer": "NASDAQ:IXCO",
@@ -33,7 +33,7 @@ class TradingView:
             "nasdaq transportation": "NASDAQ:TRAN",
             "nasdaq food producers": "NASDAQ:NQUSB451020",
             "nasdaq golden dragon": "NASDAQ:HXC",
-            "s&p": "SP:SPX",  # S&P 500 (~500 stocks)
+            "s&p": "SP:SPX",                                    # S&P 500 (~500 stocks)
             "s&p communication services": "SP:S5TELS",
             "s&p consumer discretionary": "SP:S5COND",
             "s&p consumer staples": "SP:S5CONS",
@@ -45,7 +45,7 @@ class TradingView:
             "s&p materials": "SP:S5MATR",
             "s&p real estate": "SP:S5REAS",
             "s&p utilities": "SP:S5UTIL",
-            "russel 2000": "TVC:RUT"  # Russel 2000
+            "russel 2000": "TVC:RUT"                            # Russel 2000
         }
         self.archive = []                       # Archive with all the list information from various files
         self.archive_stock_list = []            # Just the stock list deriving from the archive
@@ -79,7 +79,7 @@ class TradingView:
 
     def _screener_make_request(self, add_filters=None, add_key_pairs_to_data=None, index=None):
         # Create a session and set user-agent
-        session = rC.create_new_session(add_user_agent="yes")
+        session = rC.create_new_session(add_user_agent=True)
 
         # Define the request headers
         headers = {
@@ -87,17 +87,8 @@ class TradingView:
             "method": "POST",
             "path": "/america/scan",
             "scheme": "https",
-            "accept": "text/plain, */*; q=0.01",
-            "accept-encoding": "gzip, deflate, br",
-            "accept-language": "en-US,en;q=0.9",
             "origin": "https://www.tradingview.com",
             "referer": "https://www.tradingview.com/",
-            "sec-ch-ua": '"Chromium";v="116", "Not)A;Brand";v="24", "Google Chrome";v="116"',
-            "sec-ch-ua-mobile": "?0",
-            "sec-ch-ua-platform": '"Windows"',
-            "sec-fetch-dest": "empty",
-            "sec-fetch-mode": "cors",
-            "sec-fetch-site": "same-site",
             "x-usenewauth": "true",
         }
 
@@ -144,7 +135,7 @@ class TradingView:
 
         # Send the POST request
         url = "https://scanner.tradingview.com/america/scan"
-        retrieval_time = tC.create_time_stamp_new()
+        retrieval_time = tC.create_timestamp()
         response = session.post(url, headers=headers, json=payload)
 
         # Check the response
@@ -195,6 +186,7 @@ class TradingView:
 
     #####################
     # HIGH LOW ARCHIVE FUNCTIONS
+    #####################
     def load_high_low_archive(self, archive_location='default', date_start=None, date_end=None,
                               provided_date_format="%Y%m%d", last_x_available=None, last_from_date=None,
                               high_low_both='both', period_include_list=None, sort_archive_by_date=False):
@@ -255,23 +247,23 @@ class TradingView:
         get_files = osC.return_files_in_dir_as_strings
         if 'High' in price_type_criteria:
             if 1 in period_criteria:
-                all_files.extend(get_files(osC.append_to_dir(loc, '1mHigh'), full_path=True))
+                all_files.extend(get_files(osC.append_to_dir(loc, '1mHigh')))
             if 3 in period_criteria:
-                all_files.extend(get_files(osC.append_to_dir(loc, '3mHigh'), full_path=True))
+                all_files.extend(get_files(osC.append_to_dir(loc, '3mHigh')))
             if 6 in period_criteria:
-                all_files.extend(get_files(osC.append_to_dir(loc, '6mHigh'), full_path=True))
+                all_files.extend(get_files(osC.append_to_dir(loc, '6mHigh')))
             if 12 in period_criteria:
-                all_files.extend(get_files(osC.append_to_dir(loc, '52wkHigh'), full_path=True))
+                all_files.extend(get_files(osC.append_to_dir(loc, '52wkHigh')))
 
         if 'Low' in price_type_criteria:
             if 1 in period_criteria:
-                all_files.extend(get_files(osC.append_to_dir(loc, '1mLow'), full_path=True))
+                all_files.extend(get_files(osC.append_to_dir(loc, '1mLow')))
             if 3 in period_criteria:
-                all_files.extend(get_files(osC.append_to_dir(loc, '3mLow'), full_path=True))
+                all_files.extend(get_files(osC.append_to_dir(loc, '3mLow')))
             if 6 in period_criteria:
-                all_files.extend(get_files(osC.append_to_dir(loc, '6mLow'), full_path=True))
+                all_files.extend(get_files(osC.append_to_dir(loc, '6mLow')))
             if 12 in period_criteria:
-                all_files.extend(get_files(osC.append_to_dir(loc, '52wkLow'), full_path=True))
+                all_files.extend(get_files(osC.append_to_dir(loc, '52wkLow')))
 
 
         # Filter dates out:
@@ -305,11 +297,10 @@ class TradingView:
 
     def sort_archive_by_date(self, provide_archive_data=None):
         archive = self._parse_provided_archive_input(provide_archive_data)
-        dates = [tC.convert_date_to_date_time(x['date']) for x in archive]
-        sorted_archive = lC.new_sort_list_based_on_reference_list(dates, archive)
+        dates = [tC.convert_string_to_datetime(x['date']) for x in archive]
+        sorted_archive = lC.sort_list_based_on_reference_list(dates, archive)
         sorted_archive.reverse()
         return sorted_archive
-
 
     def search_high_low_archive(self, date_start=None, date_end=None, provided_date_format="%Y%m%d",
                                 timeframe=None, high_or_low=None, sectors=None, industries=None,
@@ -401,10 +392,10 @@ class TradingView:
         else:
             loc = archive_location
 
-        dirs = osC.return_files_in_dir_as_strings(loc, full_path=True)
+        dirs = osC.return_files_in_dir_as_strings(loc)
         all_dates = []
         for d in dirs:
-            all_dates.extend(osC.return_files_in_dir_as_strings(d))
+            all_dates.extend(osC.return_files_in_dir_as_strings(d, return_file_names_only=True))
 
         all_dates = [tC.convert_date_format(re.search(r'_(\d+)', x).group(1), "%Y%m%d%H%M%S",
                                             return_date_format) for x in all_dates]
@@ -462,7 +453,7 @@ class TradingView:
         for k in hash_select[indice]:
             op_data[k] = []
             temp_dir = osC.append_to_dir(archive, hash_select[indice][k])
-            temp_files = osC.return_files_in_dir_as_strings(temp_dir, full_path=True)
+            temp_files = osC.return_files_in_dir_as_strings(temp_dir)
             for f in temp_files:
                 date_to_check = osC.extract_file_name_given_full_path(f).split("_")[1][0:8]
                 if tC.check_if_date_time_string_is_in_given_range(date_to_check, date_start, date_end, "%Y%m%d"):
@@ -523,7 +514,6 @@ class TradingView:
         industry_data = [{x: all_industry_list.count(x)} for x in unique_ind_list]
 
         return {"sectorData": sector_data, "industryData": industry_data}
-
 
     def _filter_high_low_archive_by_date_range(self, date_start, date_end, provided_format="%Y%m%d",
                                                provide_archive=None):
@@ -725,7 +715,7 @@ def get_test_resource_loc():
     drive_letter = osC.create_root_path_starting_from_drive("C:")
     d = ["Users", 'heide', "Documents", "Luke", "Programming", 'grindSundayStocks', 'resources', 'grindSundayStocks']
 
-    return osC.append_to_dir(drive_letter, d, list=True)
+    return osC.append_to_dir(drive_letter, d)
 
 
 def test_get_all_stocks_in_high_low_archive_for_week():
@@ -760,16 +750,16 @@ def test_indice_archive():
     stop = 1
 
 
-def test_high_low_screener():
+def test_high_low_screener(high_or_low, month_time_frame):
     tv = TradingView()
-    year_highs = tv.screener_new_highs_lows()
-    stop = 1
+    res = tv.screener_new_highs_lows(new_high_or_low=high_or_low, month_time_frame=month_time_frame)
+    return res 
 
 
 def test_get_all_stocks_screener():
     tv = TradingView()
     all_stocks = tv.screener_get_all_stocks()
-    stop = 1
+    return all_stocks
 
 
 def test_base_screener_function():
@@ -778,17 +768,17 @@ def test_base_screener_function():
     stop = 1
 
 
-def test_get_stocks_by_index_screener():
+def test_get_stocks_by_index_screener(index):
     tv = TradingView()
-    nasdaq = tv.screener_get_stocks_by_index('nasdaq')
-    stop = 1
+    res = tv.screener_get_stocks_by_index(index)
+    return res
 
 
 def test_get_all_industries_in_list():
     tv = TradingView()
     all_stocks = tv.screener_get_all_stocks()
     industries = tv.get_all_industries_in_list(stock_list=all_stocks['data'])
-    stop = 1
+    return industries
 
 
 def test_get_last_x_days_available_in_high_low_archive():
@@ -821,7 +811,14 @@ def test_load_high_low_archive():
 
 
 def test():
-    test_load_high_low_archive()
+    # Non archive tests
+    # industries = test_get_all_industries_in_list()
+    # nasdaq = test_get_stocks_by_index_screener('nasdaq')
+    # all_stocks = test_get_all_stocks_screener()
+    year_highs = test_high_low_screener('high', 12)
+
+    # test_get_all_stocks_screener()
+    # test_load_high_low_archive()
     # test_get_last_x_days_available_in_high_low_archive()
     # test_get_all_industries_in_list()
     # test_get_stocks_by_index_screener()
@@ -830,6 +827,7 @@ def test():
     # test_get_all_stocks_screener()
     # test_high_low_screener()
     # test_get_all_stocks_in_high_low_archive_for_week()
+    stop = 1
 
 
 def main():
