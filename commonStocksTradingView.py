@@ -1,9 +1,9 @@
-from resources.aceCommon import osCommon as osC
-from resources.aceCommon import fileCommon as fC
-from resources.aceCommon import requestsCommon as rC
-from resources.aceCommon import timeCommon as tC
-from resources.aceCommon import listWorkCommon as lC
-from resources.aceCommon import mathCommon as mC
+from lukhed_basic_utils import osCommon as osC
+from lukhed_basic_utils import fileCommon as fC
+from lukhed_basic_utils import requestsCommon as rC
+from lukhed_basic_utils import timeCommon as tC
+from lukhed_basic_utils import listWorkCommon as lC
+from lukhed_basic_utils import mathCommon as mC
 import re
 from typing import Optional
 import json
