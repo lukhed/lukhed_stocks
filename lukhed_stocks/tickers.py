@@ -2,6 +2,7 @@ from lukhed_basic_utils import osCommon as osC
 from lukhed_basic_utils import fileCommon as fC
 from lukhed_basic_utils import requestsCommon as rC
 from lukhed_basic_utils import timeCommon as tC
+from io import StringIO
 
 # A bunch of functions to retrieve ticker lists
 
@@ -47,7 +48,28 @@ class CatWrapper:
         equities_sod = "https://files.catnmsplan.com/symbol-master/FINRACATReportableEquitySecurities_SOD.txt"
         equities_eod = "https://files.catnmsplan.com/symbol-master/FINRACATReportableEquitySecurities_EOD.txt"
         equities_intra = "https://files.catnmsplan.com/symbol-master/FINRACATReportableEquitySecurities_Intraday.txt"
-        stop = 1
+        
+        data = rC.make_request(equities_eod)
+        decoded_data = data.content.decode("utf-8")
+        
+        lines = decoded_data.split('\n')
+
+        output_data = []
+        error_count = 0
+        for entry in lines[1:]:
+            line_list = entry.split("|")
+
+            try:
+                output_data.append({
+                    'ticker': line_list[0],
+                    'issueName': line_list[1],
+                    'listingExchange': line_list[2],
+                    'testIssueFlag': line_list[3]
+                })
+            except IndexError:
+                error_count = error_count + 1
+
+        return output_data
 
 
 
