@@ -1,13 +1,58 @@
-from resources.aceCommon import osCommon as osC
-from resources.aceCommon import fileCommon as fC
-from resources.aceCommon import requestsCommon as rC
-from resources.aceCommon import timeCommon as tC
-from resources.aceCommon import errorHandleCommon as eC
-import commonStocksMarketInfo
+from lukhed_basic_utils import osCommon as osC
+from lukhed_basic_utils import fileCommon as fC
+from lukhed_basic_utils import requestsCommon as rC
+from lukhed_basic_utils import timeCommon as tC
 
 # A bunch of functions to retrieve ticker lists
 
-ticker_list_path = ['resources', 'commonStocks', 'tickerLists']
+class CatWrapper:
+    def __inti__(self, keep_daily_cache=True):
+        """
+        CAT = Consolidated Audit Trail
+        
+        https://catnmsplan.com/about-cat
+        'On July 11, 2012, the U.S. Securities and Exchange Commission (SEC) voted to adopt Rule 613 under 
+        Regulation NMS requiring the national securities exchanges and national securities associations 
+        listed below (collectively, the SROs) to submit an NMS plan (Plan) to the SEC to create, implement, 
+        and maintain a consolidated audit trail (CAT)...'
+
+
+        """
+        sources = None
+        self.cache = keep_daily_cache
+
+    def get_ticker_data_by_exchange_code(exchange_or_code, equities_or_options='equities', 
+                                         force_retrieval=False, specify_file=None):
+        """
+        https://catnmsplan.com/reference-data
+
+        The SOD CAT Reportable Equity Securities Symbol Master is published by 6 a.m. ET, and the EOD file 
+        is published by 6 p.m. ET. The intraday file is published approximately every 2 hours beginning at 
+        10:30 a.m. ET, and includes any updates made to the security master during the day, prior to the 
+        EOD file posting. The EOD file contains any securities added during the transaction date. 
+
+        Parameters
+        ----------
+        exchange_or_code : str()
+            _description_
+        equities_or_options : _type_, optional
+            _description_, by default None
+        force_retrieval : bool, optional
+            _description_, by default False
+        specify_file : str(), optional
+            Force pull of a specific file: 'sod', 'eod', or 'intra', by default None and function will pull the 
+            file that makes sense based on the curren time and CAT spec.
+        """
+
+        equities_sod = "https://files.catnmsplan.com/symbol-master/FINRACATReportableEquitySecurities_SOD.txt"
+        equities_eod = "https://files.catnmsplan.com/symbol-master/FINRACATReportableEquitySecurities_EOD.txt"
+        equities_intra = "https://files.catnmsplan.com/symbol-master/FINRACATReportableEquitySecurities_Intraday.txt"
+        stop = 1
+
+
+
+    
+    
 
 
 def get_all_tickers(use_cache_only=False, exchange_code=None, force_end_day_data=False):

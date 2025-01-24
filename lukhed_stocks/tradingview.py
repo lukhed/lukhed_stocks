@@ -19,6 +19,7 @@ class TradingView:
                                  "average_volume_90d_calc", "Volatility.W", "Volatility.M", "Perf.W", "Perf.1M",
                                  "Perf.3M", "Perf.6M", "description", "type", "subtype", "update_mode", "pricescale",
                                  "minmov", "fractional", "minmove2", "currency", "fundamental_currency_code"]
+        
         self.index_lookup = {
             "dow": "DJ:DJI",                                    # Down Jowns Industrial average (30 stocks)
             "nasdaq": "NASDAQ:IXIC",                            # Nasdaq Composite (all stocks in nasdaq)
