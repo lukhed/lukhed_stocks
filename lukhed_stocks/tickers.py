@@ -55,19 +55,45 @@ class CatWrapper:
         lines = decoded_data.split('\n')
 
         output_data = []
-        error_count = 0
         for entry in lines[1:]:
             line_list = entry.split("|")
 
+            error_flag = False
+
             try:
-                output_data.append({
-                    'ticker': line_list[0],
-                    'issueName': line_list[1],
-                    'listingExchange': line_list[2],
-                    'testIssueFlag': line_list[3]
-                })
+                ticker = line_list[0]
             except IndexError:
-                error_count = error_count + 1
+                ticker = ""
+                error_flag = True
+
+            try:
+                issue_name = line_list[1]
+            except IndexError:
+                issue_name = ""
+                error_flag = True
+
+            try:
+                listing_exchange = line_list[2]
+            except IndexError:
+                listing_exchange = ""
+                error_flag = True
+
+            try:
+                test_issue_flag = line_list[3]
+            except IndexError:
+                test_issue_flag = ""
+                error_flag = True
+
+
+            output_data.append({
+                'ticker': ticker,
+                'issueName': issue_name,
+                'listingExchange': listing_exchange,
+                'testIssueFlag': test_issue_flag,
+                'fullData': line_list.copy(),
+                'error': error_flag
+            })
+
 
         return output_data
 
