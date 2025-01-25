@@ -22,7 +22,7 @@ class CatWrapper:
         sources = None
         self.cache = keep_daily_cache
 
-    def get_ticker_data_by_exchange_code(exchange_or_code, equities_or_options='equities', 
+    def get_ticker_data_by_exchange_code(self, exchange_code_filter=None, equities_or_options='equities', 
                                          force_retrieval=False, specify_file=None):
         """
         https://catnmsplan.com/reference-data
@@ -34,8 +34,17 @@ class CatWrapper:
 
         Parameters
         ----------
-        exchange_or_code : str()
-            _description_
+        exchange_code_filter : str()
+            If exchange code provided, will filter out for the given exchange. Primary Listing Exchange:
+            A = NYSE American
+            N = NYSE
+            O = OTCBB
+            P = NYSE ARCA
+            Q = Nasdaq
+            U = OTC Equity
+            V = IEX
+            Z = Cboe BZX
+            Else NULL
         equities_or_options : _type_, optional
             _description_, by default None
         force_retrieval : bool, optional
@@ -80,8 +89,12 @@ class CatWrapper:
 
             try:
                 test_issue_flag = line_list[3]
+                if test_issue_flag == 'Y':
+                    test_issue_flag = True
+                elif test_issue_flag == 'N':
+                    test_issue_flag = False
             except IndexError:
-                test_issue_flag = ""
+                test_issue_flag = True
                 error_flag = True
 
 
@@ -91,10 +104,12 @@ class CatWrapper:
                 'listingExchange': listing_exchange,
                 'testIssueFlag': test_issue_flag,
                 'fullData': line_list.copy(),
-                'error': error_flag
+                'dataError': error_flag
             })
 
-
+        if exchange_code_filter is not None:
+            output_data = [x for x in output_data if x['listingExchange'].lower() == exchange_code_filter.lower()]
+        
         return output_data
 
 
