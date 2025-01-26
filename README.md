@@ -12,10 +12,6 @@ pip install lukhed-stocks
 <!-- no toc -->
   - [Available Functions](#available-functions)
   - [Available Wrappers](#available-wrappers)
-  - [Get Exchange and Index Data](#get-exchange-and-index-data)
-    - [Tickers Import](#tickers-import)
-    - [Get Exchange Data Functions](#get-exchange-data-functions)
-    - [Get Index Data Functions](#get-index-data-functions)
   - [CAT Wrapper](#cat-wrapper)
   - [Wikipediia Stocks](#wikipediia-stocks)
   - [Responsible Data Usage](#responsible-data-usage)
@@ -24,7 +20,7 @@ pip install lukhed-stocks
     - [Tradingview Data Usage](#tradingview-data-usage)
 
 ## Available Functions
-- [Get Exchange & Index Data](#Get-Exchange-&-Index-Data) - Utilizing various sources (free or with API key) to provide ticker data for exchanges.
+- [Get Exchange & Index Data](#Get-Exchange-and-Index-Data) - Utilizing various sources (free or with API key) to provide ticker data for exchanges.
   
 ## Available Wrappers
 - [CAT Wrapper](#CAT-Wrapper) - Conolidated Audit Trail (CAT) for exchange data provided by [CAT Webpage](https://catnmsplan.com/)
