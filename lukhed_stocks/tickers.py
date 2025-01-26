@@ -2,12 +2,11 @@ from lukhed_basic_utils import osCommon as osC
 from lukhed_basic_utils import fileCommon as fC
 from lukhed_basic_utils import requestsCommon as rC
 from lukhed_basic_utils import timeCommon as tC
-from io import StringIO
 
 # A bunch of functions to retrieve ticker lists
 
 class CatWrapper:
-    def __inti__(self, keep_daily_cache=True):
+    def __init__(self):
         """
         CAT = Consolidated Audit Trail
         
@@ -20,22 +19,22 @@ class CatWrapper:
 
         """
         sources = None
-        self.cache = keep_daily_cache
 
-    def get_ticker_data_by_exchange_code(self, exchange_code_filter=None, equities_or_options='equities', 
-                                         force_retrieval=False, specify_file=None):
+    def get_cat_reported_equities(self, exchange_code_filter=None, equities_or_options='equities', 
+                                    specify_file='eod'):
         """
+        Get a list of is a comprehensive list that includes all National Market System (NMS) stocks and certain 
+        over-the-counter (OTC) equity securities that are subject to reporting requirements under the 
+        Consolidated Audit Trail (CAT) for a given trading day. This list is updated multiple times daily to reflect 
+        any changes, ensuring that firms have the most current information for accurate reporting. 
+
         https://catnmsplan.com/reference-data
 
-        The SOD CAT Reportable Equity Securities Symbol Master is published by 6 a.m. ET, and the EOD file 
-        is published by 6 p.m. ET. The intraday file is published approximately every 2 hours beginning at 
-        10:30 a.m. ET, and includes any updates made to the security master during the day, prior to the 
-        EOD file posting. The EOD file contains any securities added during the transaction date. 
-
+        
         Parameters
         ----------
-        exchange_code_filter : str()
-            If exchange code provided, will filter out for the given exchange. Primary Listing Exchange:
+        exchange_code_filter : str(), optional
+            If exchange code provided, the result will be filtered for the given exchange. Primary Listing Exchange:
             A = NYSE American
             N = NYSE
             O = OTCBB
@@ -45,20 +44,44 @@ class CatWrapper:
             V = IEX
             Z = Cboe BZX
             Else NULL
-        equities_or_options : _type_, optional
-            _description_, by default None
-        force_retrieval : bool, optional
-            _description_, by default False
+        
+        None by default, and all equities included.
+
+        equities_or_options : str(), optional
+            'equities' pulls stocks and 'options' pulls the options file. 'equities' by default.
+            
         specify_file : str(), optional
-            Force pull of a specific file: 'sod', 'eod', or 'intra', by default None and function will pull the 
-            file that makes sense based on the curren time and CAT spec.
+            The file you want to pull from CAT may depend on the day and time of day you are pulling data. You have 
+            three choices:
+                'eod' (end of day)
+                'sod' (start of day)
+                'intraday'
+            
+            By default 'eod'
+
+            The SOD CAT Reportable Equity Securities Symbol Master is published by 6 a.m. ET, and the EOD file 
+            is published by 6 p.m. ET. The intraday file is published approximately every 2 hours beginning at 
+            10:30 a.m. ET, and includes any updates made to the security master during the day, prior to the 
+            EOD file posting. The EOD file contains any securities added during the transaction date. 
         """
 
-        equities_sod = "https://files.catnmsplan.com/symbol-master/FINRACATReportableEquitySecurities_SOD.txt"
-        equities_eod = "https://files.catnmsplan.com/symbol-master/FINRACATReportableEquitySecurities_EOD.txt"
-        equities_intra = "https://files.catnmsplan.com/symbol-master/FINRACATReportableEquitySecurities_Intraday.txt"
+        base_url = 'https://files.catnmsplan.com/symbol-master/'
+
+        if equities_or_options.lower() == 'equities':
+            url = base_url + 'FINRACATReportableEquitySecurities_'
+        elif equities_or_options.lower() == 'options':
+            url = base_url + 'CATReportableOptionsSymbolMaster_'
+        else:
+            print(f"ERROR: '{equities_or_options}' is an invalid equities_or_options parameter. Use 'equities' or 'options'")
+            return []
         
-        data = rC.make_request(equities_eod)
+        if specify_file.lower() in ['eod', 'sod', 'intraday']:
+            url = url + specify_file.upper() + '.txt'
+        else:
+            print(f"ERROR: '{specify_file}' is an invalid specify_file parameter. Use 'eod', 'sod', or 'intraday'")
+            return []
+        
+        data = rC.make_request(url)
         decoded_data = data.content.decode("utf-8")
         
         lines = decoded_data.split('\n')
@@ -113,124 +136,11 @@ class CatWrapper:
         return output_data
 
 
-
+class WikipediaStocks:
+    def __init__(self):
+        stop = 1
     
     
-
-
-def get_all_tickers(use_cache_only=False, exchange_code=None, force_end_day_data=False):
-    """
-    This function gets latest ticker data from sec website, and writes to a cache.
-    https://catnmsplan.com/reference-data
-
-    WARMING: This function makes a call to IEX to retrieve if today is trading day. The cost of this transaction
-    is 1/50,000 toward limit.
-
-    :param use_cache_only: bool(), use cache only will skip fetching from SEC
-
-    :param exchange_code: str(), if non-none, will return only tickers associated with the exchange code. Find up
-                                 to date exchange code at the link:
-                                 Primary Listing Exchange
-                                    A = NYSE American
-                                    N = NYSE
-                                    O = OTCBB
-                                    P = NYSE ARCA
-                                    Q = Nasdaq
-                                    U = OTC Equity
-                                    V = IEX
-                                    Z = Cboe BZX
-                                    Else NULL
-    :param force_end_day_data: bool(), will always give you end day data instead of intra day.
-
-    :return:
-    """
-    intra_day_file = osC.create_file_path_string(["resources", "commonStocks", "tickerLists", "all", "intra_day.txt"])
-    end_day_file = osC.create_file_path_string(["resources", "commonStocks", "tickerLists", "all", "end_day.txt"])
-    start_day_file = osC.create_file_path_string(["resources", "commonStocks", "tickerLists", "all", "start_day.txt"])
-    last_updated_file = osC.create_file_path_string(["resources", "commonStocks", "tickerLists", "all", "last_update.json"])
-
-
-    if use_cache_only:
-        pass
-    else:
-            intra_updated = True
-            end_updated = True
-            start_updated = True
-            if force_end_day_data:
-                intra_updated = False
-            else:
-                try:
-                    intra_tickers = rC.requests_get_url_content(
-                        "https://files.catnmsplan.com/symbol-master/FINRACATReportableEquitySecurities_Intraday.txt")
-                    fC.write_content_to_file(intra_day_file, intra_tickers)
-                except:
-                    print("Error retrieving intra-day prices")
-                    intra_updated = False
-                tC.sleep(0.5)
-
-            if force_end_day_data:
-                start_updated = False
-            else:
-                try:
-                    start_day = rC.requests_get_url_content(
-                        "https://files.catnmsplan.com/symbol-master/CATReportableOptionsSymbolMaster_SOD.txt")
-                    fC.write_content_to_file(start_day_file, start_day)
-                except:
-                    print("Error retrieving start day prices")
-                    start_updated = False
-                tC.sleep(0.5)
-
-            try:
-                end_day = rC.requests_get_url_content(
-                    "https://files.catnmsplan.com/symbol-master/FINRACATReportableEquitySecurities_EOD.txt")
-                fC.write_content_to_file(end_day_file, end_day)
-            except:
-                print("Error retrieving end day prices")
-                end_updated = False
-
-            date_string = tC.get_date_today(return_string=True)
-
-            if osC.check_if_file_exists(last_updated_file, full_path=1) == 1:
-                update_dict = fC.load_json_from_file(last_updated_file)
-            else:
-                update_dict = {
-                    "intraday": "",
-                    "sod": "",
-                    "eod": ""
-                }
-
-            if intra_updated:
-                update_dict["intraday"] = date_string
-            if start_updated:
-                update_dict["sod"] = date_string
-            if end_updated:
-                update_dict["eod"] = date_string
-
-            fC.dump_json_to_file(last_updated_file, update_dict)
-
-
-    ch = tC.get_current_hour()
-
-
-    if force_end_day_data:
-        tickers = fC.return_lines_in_file(end_day_file, delimiter="|")
-    else:
-        trading_day = commonStocksMarketInfo.is_trading_day()
-        # return EOD or Intra day based on time and trading day. Note: Start of day has option chain data, not tickers
-        if trading_day:
-            if 11 > ch >= 18:
-                tickers = fC.return_lines_in_file(end_day_file, delimiter="|", header="no")
-            else:
-                tickers = fC.return_lines_in_file(intra_day_file, delimiter="|", header="no")
-        else:
-            tickers = fC.return_lines_in_file(end_day_file, delimiter="|")
-
-    if exchange_code is None:
-        tickers = [x[0] for x in tickers]
-    else:
-        tickers = [x[0] for x in tickers if eC.try_except_list_access(2, x) == exchange_code]
-
-    return tickers
 
 
 def get_all_tickers_s_and_p(return_type="all"):
