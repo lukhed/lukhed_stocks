@@ -13,7 +13,7 @@ pip install lukhed-stocks
   - [Available Functions](#available-functions)
   - [Available Wrappers](#available-wrappers)
   - [CAT Wrapper](#cat-wrapper)
-  - [Wikipediia Stocks](#wikipediia-stocks)
+  - [Wikipedia Stocks](#wikipedia-stocks)
   - [Responsible Data Usage](#responsible-data-usage)
     - [CAT Data Usage](#cat-data-usage)
     - [Wikipedia Data Usage](#wikipedia-data-usage)
@@ -71,7 +71,7 @@ otc = tickers.get_russell2000_stocks()
 ## CAT Wrapper
 Documentation coming soon.
 
-## Wikipediia Stocks
+## Wikipedia Stocks
 Documentation coming soon.
 
 
