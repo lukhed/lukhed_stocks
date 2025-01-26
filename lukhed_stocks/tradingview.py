@@ -1,10 +1,7 @@
-from lukhed_basic_utils import osCommon as osC
-from lukhed_basic_utils import fileCommon as fC
 from lukhed_basic_utils import requestsCommon as rC
 from lukhed_basic_utils import timeCommon as tC
 from lukhed_basic_utils import listWorkCommon as lC
 from lukhed_basic_utils import mathCommon as mC
-import re
 import json
 
 
@@ -314,4 +311,4 @@ class TradingView:
         tickers = [x['name'] for x in stock_list]
         return lC.return_unique_values(tickers)
     
-    
+
