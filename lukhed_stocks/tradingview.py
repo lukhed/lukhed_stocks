@@ -237,7 +237,6 @@ class TradingView:
 
     #####################
     # STOCK LIST FILTERS AND FUNCTIONS.
-
     def filter_stock_list_by_sector(self, sectors, stock_list):
         """
         Returns a list of stocks that meet the sector criteria provided.
@@ -311,4 +310,3 @@ class TradingView:
         tickers = [x['name'] for x in stock_list]
         return lC.return_unique_values(tickers)
     
-
