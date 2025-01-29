@@ -12,29 +12,30 @@ pip install lukhed-stocks
 <!-- no toc -->
   - [Available Functions](#available-functions)
   - [Available Wrappers](#available-wrappers)
-  - [CAT Wrapper](#cat-wrapper)
-  - [Wikipediia Stocks](#wikipediia-stocks)
   - [Responsible Data Usage](#responsible-data-usage)
     - [CAT Data Usage](#cat-data-usage)
     - [Wikipedia Data Usage](#wikipedia-data-usage)
     - [Tradingview Data Usage](#tradingview-data-usage)
 
 ## Available Functions
-- [Get Exchange & Index Data](#Get-Exchange-and-Index-Data) - Utilizing various sources (free or with API key) to provide ticker data for exchanges.
+- [Ticker Data Functions](#ticker-functions) - Utilizing various sources (default sources require no api key).
+  - [Get Tickers By Exchange](#get-tickers-by-exchange)
+  - [Get Tickers By Index](#get-tickers-by-index)
+  - [Get Company Logo by Ticker](#get-company-logo-by-ticker)
   
 ## Available Wrappers
 - [CAT Wrapper](#CAT-Wrapper) - Conolidated Audit Trail (CAT) for exchange data provided by [CAT Webpage](https://catnmsplan.com/)
 - [Wikipedia Stocks](#Wikipedia-Wrapper) - For obtaining various stock data from Wikipedia (various pages)
 
 
-## Get Exchange and Index Data
+## Ticker Functions
 
 ### Tickers Import
 ```python
 from lukhed_stocks import tickers
 ```
 
-### Get Exchange Data Functions
+### Get Tickers By Exchange
 Provides a list of stock data for the given exchange. Each function can optionally be called with 'tickers_only' parameter to return a list of strings only. These functions utilize [CAT data](https://catnmsplan.com/) by default  and do not require an API key.
 
 ```python
@@ -51,7 +52,7 @@ iex = tickers.get_iex_stocks(tickers_only=True)
 | tickers.get_otc_stocks       | [CAT](#cat-data-usage)|
 | tickers.get_iex_stocks       | [CAT](#cat-data-usage)|
 
-### Get Index Data Functions
+### Get Tickers By Index
 Provides a list of stock data for the given index. Each function can optionally be called with 'tickers_only' parameter to return a list of strings only. The default source for each function does 
 not require an API key.
 
@@ -68,10 +69,22 @@ otc = tickers.get_russell2000_stocks()
 | tickers.get_russell2000_stocks  | [TradingView](#tradingview-data-usage)|
 
 
+### Get Company Logo by Ticker
+```python
+logo_url = tickers.get_company_logo('ALLT')
+logo_url_with_download = tickers.get_company_logo('WAY', output_file='way.png')
+```
+
+| Function | Default Source|
+|------------------------------|--------------|
+| tickers.get_company_log      | [Synth](#synth)|
+
+
+
 ## CAT Wrapper
 Documentation coming soon.
 
-## Wikipediia Stocks
+## Wikipedia Stocks
 Documentation coming soon.
 
 
@@ -87,5 +100,9 @@ Wikipedia content is licensed under the Creative Commons Attribution-ShareAlike 
 For more details on the terms of use, please refer to the 
 [Wikimedia Foundation's Terms of Use](https://foundation.wikimedia.org/wiki/Policy:Terms_of_Use).
 
+### Synth
+Full Synth terms are found [here](https://synthfinance.com/terms). This library provides access to synth:
+- Images, free to use if attribution is provided (please confirm with synthfinance.com or the terms above)
+
 ### Tradingview Data Usage
-I am currently trying to remove trading view as a source, as their policy is restrictive and confusing. Please read trading view policies here: 'https://www.tradingview.com/policies/
+I am currently trying to remove trading view as a source, as their policy is restrictive and confusing. Please read [trading view policies here](https://www.tradingview.com/policies/)
