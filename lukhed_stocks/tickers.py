@@ -1,6 +1,7 @@
 from lukhed_stocks.cat import CatWrapper
 from lukhed_stocks.wikipedia import WikipediaStocks
 from lukhed_stocks.tradingview import TradingView
+from lukhed_basic_utils import requestsCommon as rC
 
 # A bunch of functions to retrieve ticker lists without an API
 
@@ -215,3 +216,39 @@ def get_russell2000_stocks(tickers_only=False, data_source='tradingview'):
         data = data['data']
     
     return data
+
+
+########################
+# Other Functions
+########################
+def get_company_logo(ticker, output_file=None, data_source='synthfinance'):
+    """
+    Gets logo for the company by ticker.
+
+    Parameters
+    ----------
+    ticker : str
+        Stock ticker symbol of the company.
+    output_file : str, optional
+        File path to save the downloaded SVG image. If None, only the image URL is returned.
+    data_source : str, optional
+        Data source for fetching the logo. Currently supports 'synthfinance'. Default is 'synthfinance'.
+
+    Returns
+    -------
+    str
+        The URL of the company logo if output_file is None.
+    """
+
+    # Validate data source
+    if data_source != 'synthfinance':
+        raise ValueError(f"Unsupported data_source: {data_source}. Currently, only 'synthfinance' is supported.")
+
+    # Construct the SynthFinTech logo URL
+    logo_url = f"https://logo.synthfinance.com/ticker/{ticker.upper()}"
+
+    # If no output file is given, return the logo URL
+    if output_file is not None:
+        rC.download_image(logo_url, output_file)
+
+    return logo_url
