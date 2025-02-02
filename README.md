@@ -1,5 +1,7 @@
 # lukhed_stocks
-A collection of stocks analysis utility functions and API wrappers built with personal use in mind. Basic functionality is available now, and this repo is in development. Please note that you are responsible for how you access and use the data. See the [responsible data usage section](#responsible-data-usage) for more info.
+A collection of stocks analysis utility functions and API wrappers built with personal use in mind. Basic 
+functionality is available now, and this repo is in development. Please note that you are responsible for 
+how you access and use the data. See the [responsible data usage section](#responsible-data-usage) for more info.
 
 
 ## Installation
