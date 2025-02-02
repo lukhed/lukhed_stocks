@@ -178,6 +178,29 @@ class TradingView:
         }
 
     #####################
+    # SCREENER SETTINGS
+    def add_all_performance_columns(self):
+        """
+        This function will add all market performance % data to the default screen columns. All screens performed 
+        after running the add will have all the information.
+        """
+        all_perf_columns = [
+            "Perf.W",
+            "Perf.1M",
+            "Perf.3M",
+            "Perf.6M",
+            "Perf.Y",
+            "Perf.5Y",
+            "Perf.10Y",
+            "Perf.All",
+        ]
+
+        for column in all_perf_columns:
+            if column not in self.screener_columns:
+                self.screener_columns.append(column)
+    
+    
+    #####################
     # LIVE SCREENERS
     def screener_new_highs_lows(self, new_high_or_low='high', month_time_frame=12):
         """
