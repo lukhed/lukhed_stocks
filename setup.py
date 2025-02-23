@@ -11,7 +11,7 @@ setup(
     url="https://github.com/lukhed/lukhed_stocks",
     packages=find_packages(),
     include_package_data=True,  # Ensures MANIFEST.in is used
-    python_requires=">=3.9",
+    python_requires=">=3.10",
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
