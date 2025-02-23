@@ -1,7 +1,7 @@
 # lukhed_stocks
-A collection of stocks analysis utility functions and API wrappers built with personal use in mind. Basic 
-functionality is available now, and this repo is in development. Please note that you are responsible for 
-how you access and use the data. See the [responsible data usage section](#responsible-data-usage) for more info.
+A collection of stocks analysis utility functions and API wrappers. Repo is in development. Please note that 
+you are responsible for how you access and use the data. 
+See the [responsible data usage section](#responsible-data-usage) for more info.
 
 
 ## Installation
@@ -12,12 +12,9 @@ pip install lukhed-stocks
 
 ## TOC
 <!-- no toc -->
-  - [Available Functions](#available-functions)
-  - [Available Wrappers](#available-wrappers)
-  - [Responsible Data Usage](#responsible-data-usage)
-    - [CAT Data Usage](#cat-data-usage)
-    - [Wikipedia Data Usage](#wikipedia-data-usage)
-    - [Tradingview Data Usage](#tradingview-data-usage)
+[Available Functions](#available-functions)<br>
+[Available Wrappers](#available-wrappers)<br>
+[Responsible Data Usage](#responsible-data-usage)
 
 ## Available Functions
 - [Ticker Data Functions](#ticker-functions) - Utilizing various sources (default sources require no api key).
@@ -26,8 +23,11 @@ pip install lukhed-stocks
   - [Get Company Logo by Ticker](#get-company-logo-by-ticker)
   
 ## Available Wrappers
-- [CAT Wrapper](#CAT-Wrapper) - Conolidated Audit Trail (CAT) for exchange data provided by [CAT Webpage](https://catnmsplan.com/)
-- [Wikipedia Stocks](#Wikipedia-Wrapper) - For obtaining various stock data from Wikipedia (various pages)
+- [CAT Wrapper](#cat-wrapper) - Conolidated Audit Trail (CAT) for exchange data provided by [CAT Webpage](https://catnmsplan.com/)
+- [Wikipedia Stocks](#wikipedia-stocks) - For obtaining various stock data from Wikipedia (various pages)
+- [Schwab Wrapper](#schwab-wrapper) - Wrapper for [schwab-py wrapper](https://pypi.org/project/schwab-py/). Adds key 
+  management and convenience functions to the unopinionated wrapper providing (auth, quotes, history, options, 
+  account info and more.)
 
 
 ## Ticker Functions
@@ -87,6 +87,9 @@ logo_url_with_download = tickers.get_company_logo('WAY', output_file='way.png')
 Documentation coming soon.
 
 ## Wikipedia Stocks
+Documentation coming soon.
+
+## Schwab Wrapper
 Documentation coming soon.
 
 
