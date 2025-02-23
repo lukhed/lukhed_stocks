@@ -1,7 +1,7 @@
 # lukhed_stocks
-A collection of stocks analysis utility functions and API wrappers built with personal use in mind. Basic 
-functionality is available now, and this repo is in development. Please note that you are responsible for 
-how you access and use the data. See the [responsible data usage section](#responsible-data-usage) for more info.
+A collection of stocks analysis utility functions and API wrappers. Repo is in development. Please note that 
+you are responsible for how you access and use the data. 
+See the [responsible data usage section](#responsible-data-usage) for more info.
 
 
 ## Installation
@@ -12,12 +12,9 @@ pip install lukhed-stocks
 
 ## TOC
 <!-- no toc -->
-  - [Available Functions](#available-functions)
-  - [Available Wrappers](#available-wrappers)
-  - [Responsible Data Usage](#responsible-data-usage)
-    - [CAT Data Usage](#cat-data-usage)
-    - [Wikipedia Data Usage](#wikipedia-data-usage)
-    - [Tradingview Data Usage](#tradingview-data-usage)
+[Available Functions](#available-functions)<br>
+[Available Wrappers](#available-wrappers)<br>
+[Responsible Data Usage](#responsible-data-usage)
 
 ## Available Functions
 - [Ticker Data Functions](#ticker-functions) - Utilizing various sources (default sources require no api key).
@@ -26,8 +23,10 @@ pip install lukhed-stocks
   - [Get Company Logo by Ticker](#get-company-logo-by-ticker)
   
 ## Available Wrappers
-- [CAT Wrapper](#CAT-Wrapper) - Conolidated Audit Trail (CAT) for exchange data provided by [CAT Webpage](https://catnmsplan.com/)
-- [Wikipedia Stocks](#Wikipedia-Wrapper) - For obtaining various stock data from Wikipedia (various pages)
+- [CAT Wrapper](#cat-wrapper) - Conolidated Audit Trail (CAT) for exchange data provided by [CAT Webpage](https://catnmsplan.com/)
+- [Wikipedia Stocks](#wikipedia-stocks) - For obtaining various stock data from Wikipedia (various pages)
+- [Schwab Wrapper](#schwab-wrapper) - Wrapper for [schwab-py wrapper](https://pypi.org/project/schwab-py/). Adds key 
+  management and convenience functions to the unopinionated wrapper which provides auth, quotes, history, options, account info and more.
 
 
 ## Ticker Functions
@@ -88,6 +87,46 @@ Documentation coming soon.
 
 ## Wikipedia Stocks
 Documentation coming soon.
+
+## Schwab Wrapper
+
+### Setup
+Setup the API auth once and use it across hardware. To setup, instantiate with schwab_api_setup=True. By default, your private github repo is used for key mangement (you will need a github account and token). Setup will ask for your [Schwab developer](https://developer.schwab.com/) app key, secret, and callback url, then take you through authenticating with Schwab.<br><br>Note: this wrapper uses [schwab-py](https://pypi.org/project/schwab-py/) for actual Schwab auth. See the documentation there for any issues or questions in setting up your schwab account.
+
+```python
+#Github setup
+schwab = SchwabPy(schwab_api_setup=True)
+```
+
+```python
+#Local setup (won't work across hardware)
+schwab = SchwabPy(schwab_api_setup=True, key_management='local')
+```
+
+### Usage Examples After Setup
+```python
+schwab = SchwabPy()
+quotes = schwab.get_stock_quote(['allt', 'way', 'pplt', 'impuy'])
+price = schwab.get_stock_price('allt')
+low = schwab.get_stock_52w_low('gld')
+percent_below_high = schwab.get_percent_below_52w_high('aapl')
+```
+
+### Cache Option
+If prices are stale when using this wrapper (e.g., after market) or realtime price is not needed for your analysis, you can use cache to speed up calls.
+
+```python
+schwab = SchwabPy(use_ticker_cache=True)
+quotes = schwab.get_stock_quote(['allt', 'way', 'pplt', 'impuy'])   # 'allt' in cache
+price = schwab.get_stock_price('allt')  # retrieve price from cache
+```
+
+### Utilizing schwab-py
+My wrapper is built for key management, advanced analysis, and ease of use. The exposed methods are recommended when using my wrapper, but you can access any of the endpoints available from [schwab-py](https://pypi.org/project/schwab-py/) like below.
+
+```python
+schwab.api.get_price_history_every_minute("ALLT")
+```
 
 
 ## Responsible Data Usage
