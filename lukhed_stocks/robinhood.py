@@ -36,6 +36,26 @@ class Robinhood:
 
         return r
 
+    def _get_id_for_symbol(self, symbol):
+        """
+        Retrieve the ID for a given stock symbol.
+
+        Parameters
+        ----------
+        symbol : str
+            The stock symbol to retrieve the ID for.
+
+        Returns
+        -------
+        str
+            The ID of the instrument if found, otherwise None.
+        """
+        data = self.get_basic_data(symbol)
+        if data and 'id' in data:
+            return data['id']
+        
+        return None
+    
     def get_all_instruments(self, retrieve_all=False):
         """
         By default, returns a paginated list of all instruments tracked by Robinhood. Note: not all are trade-able.
@@ -171,6 +191,52 @@ class Robinhood:
         
         return results
     
+    def get_basic_chart_data(self, symbol, span='all', extended_hours=False):
+        """
+        Retrieve historical price data for a specific instrument.
+
+        Parameters
+        ----------
+        symbol : str
+            The stock symbol of the instrument for which to retrieve historical data.
+        span : str, optional
+            The time span for the historical data, by default 'all'. Options include: 
+            'day', 'week', 'month', '3month', 'ytd', 'year', '5year', 'all'.
+        extended_hours : bool, optional
+            Whether to include extended hours data, by default False.
+
+        Returns
+        -------
+        list
+            A list of historical price data points.
+        """
+        
+        
+        id = self._get_id_for_symbol(symbol)
+        url = f'https://bonfire.robinhood.com/instruments/{id}/historical-chart/?display_span={span}&hide_extended_hours={"true" if not extended_hours else "false"}'
+        r = self._unauthenticated_call(url, method="GET")
+
+        lines = r['chart_data']['chart']['lines']
+        segments = lines[len(lines) - 1]['segments']
+        
+        points = []
+        for segment in segments:
+            points.extend(segment['points'])
+
+        results = []
+        for point in points:
+            price = point['cursor_data']['primary_value']['value']
+            date = point['cursor_data']['label']['value'].replace("LISTED ON ", "")
+            relative_gain = point['cursor_data']['secondary_value']['main']['value']
+
+            results.append({
+                'price': price,
+                'date': date,
+                'relative_gain': relative_gain
+            })
+
+        return results
+
     ###################
     # Lists
     ###################
