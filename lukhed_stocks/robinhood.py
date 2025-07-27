@@ -79,6 +79,28 @@ class Robinhood:
 
         return instrument_list
     
+    
+    def _parse_symbol_input(self, symbols):
+        """
+        Parse the input symbols to ensure they are in a list format.
+
+        Parameters
+        ----------
+        symbols : str, list
+            The stock symbol(s) to be parsed.
+
+        Returns
+        -------
+        list
+            A list of symbols.
+        """
+        if isinstance(symbols, str):
+            return [symbols]
+        elif isinstance(symbols, list):
+            return symbols
+        else:
+            raise ValueError("Symbols must be a string or a list of strings.")
+        
     ###################
     # Get data by symbol(s)
     ###################
@@ -88,21 +110,33 @@ class Robinhood:
 
         Parameters
         ----------
-        symbol : str
-            The stock symbol of the instrument.
+        symbol : str or list
+            The stock symbol of the instrument or a list of symbols.
 
         Returns
         -------
         dict
             A dictionary containing the instrument data if found, otherwise None.
         """
-        url = f'https://api.robinhood.com/instruments/?symbol={symbol}'
+        symbol_list = self._parse_symbol_input(symbol)
+
+        url = f'https://api.robinhood.com/instruments/?symbols='
+        url += ','.join(symbol_list)
+
         r = self._unauthenticated_call(url, method="GET")
         
-        if 'results' in r and r['results']:
-            return r['results'][0]
-        
-        return None
+        try:
+            results = r['results']
+        except KeyError:
+            results = []
+
+        if isinstance(symbol, list):
+            for i, s in enumerate(symbol):
+                results[i] = {'symbol': s, **results[i]}
+        else:
+            results = results[0] if results else None
+
+        return results
     
     def get_fundamentals(self, symbol):
         """
@@ -118,11 +152,10 @@ class Robinhood:
         dict
             A dictionary containing the fundamental data if found, otherwise None.
         """
+        symbol_list = self._parse_symbol_input(symbol)
+
         url = 'https://api.robinhood.com/fundamentals/?symbols='
-        if isinstance(symbol, list):
-            url += ','.join(symbol)
-        else:
-            url += symbol
+        url += ','.join(symbol_list)
 
         r = self._unauthenticated_call(url, method="GET")
         
