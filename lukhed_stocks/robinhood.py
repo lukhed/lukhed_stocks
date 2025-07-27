@@ -77,6 +77,7 @@ class Robinhood:
         else:
             raise ValueError("Symbols must be a string or a list of strings.")
         
+    
     ###################
     # Get data by symbol(s)
     ###################
@@ -193,7 +194,7 @@ class Robinhood:
 
         return results
 
-
+    
     ###################
     # Lists
     ###################
@@ -295,6 +296,7 @@ class Robinhood:
 
         return instrument_list
 
+    
     ###################
     # Search
     ###################
