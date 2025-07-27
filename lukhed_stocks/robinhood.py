@@ -193,7 +193,7 @@ class Robinhood:
     
     def get_basic_chart_data(self, symbol, span='all', extended_hours=False):
         """
-        Retrieve historical price data for a specific instrument.
+        Retrieves the data related to the basic price chart shown on robinhood.com for a given instrument.
 
         Parameters
         ----------
