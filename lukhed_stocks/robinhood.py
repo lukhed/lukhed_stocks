@@ -56,50 +56,6 @@ class Robinhood:
         
         return None
     
-    def get_all_instruments(self, retrieve_all=False):
-        """
-        By default, returns a paginated list of all instruments tracked by Robinhood. Note: not all are trade-able.
-
-        If retrieve_all is True, it will return all instruments in a single list.
-
-        Parameters
-        ----------
-        retrieve_all : bool, optional
-            If True, will complete full retrieval by pagination, by default False.
-            Note: this can take a long time as there are ~270 pages as of 7/25. It is recommended to ensure the api
-            delay is on when using this option (set upon class instantiation).
-
-        Returns
-        -------
-        list
-            A list of instruments, each represented as a dictionary containing details about the instrument.
-        """
-        url = 'https://api.robinhood.com/instruments/'
-        
-        instrument_list = []
-        complete = False
-        page_url = url
-        page_count = 1
-        while not complete:
-            print(f"Retrieving page {page_count} of instruments...")
-            r = self._unauthenticated_call(page_url, method="GET")
-            page_count += 1
-            
-            try:
-                instrument_list.extend(r['results'].copy())
-            except KeyError:
-                print("No results found in the response.")
-
-            if not retrieve_all:
-                complete = True
-            else:
-                page_url = r['next']
-                if not page_url:
-                    complete = True
-
-        return instrument_list
-    
-    
     def _parse_symbol_input(self, symbols):
         """
         Parse the input symbols to ensure they are in a list format.
@@ -237,6 +193,7 @@ class Robinhood:
 
         return results
 
+
     ###################
     # Lists
     ###################
@@ -294,6 +251,49 @@ class Robinhood:
             results = [x['symbol'] for x in results]
         
         return results
+    
+    def get_all_instruments(self, retrieve_all=False):
+        """
+        By default, returns a paginated list of all instruments tracked by Robinhood. Note: not all are trade-able.
+
+        If retrieve_all is True, it will return all instruments in a single list.
+
+        Parameters
+        ----------
+        retrieve_all : bool, optional
+            If True, will complete full retrieval by pagination, by default False.
+            Note: this can take a long time as there are ~270 pages as of 7/25. It is recommended to ensure the api
+            delay is on when using this option (set upon class instantiation).
+
+        Returns
+        -------
+        list
+            A list of instruments, each represented as a dictionary containing details about the instrument.
+        """
+        url = 'https://api.robinhood.com/instruments/'
+        
+        instrument_list = []
+        complete = False
+        page_url = url
+        page_count = 1
+        while not complete:
+            print(f"Retrieving page {page_count} of instruments...")
+            r = self._unauthenticated_call(page_url, method="GET")
+            page_count += 1
+            
+            try:
+                instrument_list.extend(r['results'].copy())
+            except KeyError:
+                print("No results found in the response.")
+
+            if not retrieve_all:
+                complete = True
+            else:
+                page_url = r['next']
+                if not page_url:
+                    complete = True
+
+        return instrument_list
 
     ###################
     # Search
