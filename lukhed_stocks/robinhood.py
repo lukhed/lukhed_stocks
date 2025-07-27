@@ -79,7 +79,10 @@ class Robinhood:
 
         return instrument_list
     
-    def get_instrument_data_by_symbol(self, symbol):
+    ###################
+    # Get data by symbol(s)
+    ###################
+    def get_basic_data(self, symbol):
         """
         Retrieve instrument data by its symbol.
 
@@ -101,59 +104,7 @@ class Robinhood:
         
         return None
     
-    def search_instruments_by_symbol_keyword(self, keyword):
-        """
-        Search for instruments by a keyword in their symbol.
-
-        Parameters
-        ----------
-        keyword : str
-            The keyword to search for in the instrument symbols.
-
-        Returns
-        -------
-        list
-            A list of instruments that match the keyword.
-        """
-        url = f'https://api.robinhood.com/instruments/?query={keyword}'
-        r = self._unauthenticated_call(url, method="GET")
-        
-        if 'results' in r:
-            return r['results']
-        
-        return []
-    
-    def _not_working_general_search(self, search_query):
-        """
-        NOT WORKING: NEEDS AUTH?
-        Search for instruments by a keyword in their name or symbol.
-
-        Parameters
-        ----------
-        keyword : str
-            The keyword to search for in the instrument names or symbols.
-
-        Returns
-        -------
-        list
-            A list of instruments that match the keyword.
-        """
-        url = "https://bonfire.robinhood.com/search/"
-        params = {
-            "content_types": "instruments,lists,currency_pairs,education,deeplinks,active_futures,non_active_futures,market_indexes",
-            "query": search_query,
-            "query_context": "default",
-            "user_origin": "US"
-        }
-
-        r = self._unauthenticated_call(url, method="GET", params=params)
-
-        if 'results' in r:
-            return r['results']
-        
-        return []
-    
-    def get_fundamental_data_by_symbol(self, symbol):
+    def get_fundamentals(self, symbol):
         """
         Retrieve fundamental data for an instrument by its symbol.
 
@@ -187,6 +138,9 @@ class Robinhood:
         
         return results
     
+    ###################
+    # Lists
+    ###################
     def get_most_held_instruments(self, top_x=100, return_symbols_only=False):
         """
         Retrieves the top 100 most popular instruments list which is defined by robinhood:
@@ -241,3 +195,62 @@ class Robinhood:
             results = [x['symbol'] for x in results]
         
         return results
+
+    ###################
+    # Search
+    ###################
+    def search_instruments_by_symbol_keyword(self, keyword):
+        """
+        Search for instruments by a keyword in their symbol.
+
+        Parameters
+        ----------
+        keyword : str
+            The keyword to search for in the instrument symbols.
+
+        Returns
+        -------
+        list
+            A list of instruments that match the keyword.
+        """
+        url = f'https://api.robinhood.com/instruments/?query={keyword}'
+        r = self._unauthenticated_call(url, method="GET")
+        
+        if 'results' in r:
+            return r['results']
+        
+        return []
+    
+    def _not_working_general_search(self, search_query):
+        """
+        NOT WORKING: NEEDS AUTH?
+        Search for instruments by a keyword in their name or symbol.
+
+        Parameters
+        ----------
+        keyword : str
+            The keyword to search for in the instrument names or symbols.
+
+        Returns
+        -------
+        list
+            A list of instruments that match the keyword.
+        """
+        url = "https://bonfire.robinhood.com/search/"
+        params = {
+            "content_types": "instruments,lists,currency_pairs,education,deeplinks,active_futures,non_active_futures,market_indexes",
+            "query": search_query,
+            "query_context": "default",
+            "user_origin": "US"
+        }
+
+        r = self._unauthenticated_call(url, method="GET", params=params)
+
+        if 'results' in r:
+            return r['results']
+        
+        return []
+    
+    
+    
+    
