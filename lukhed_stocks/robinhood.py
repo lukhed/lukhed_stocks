@@ -153,9 +153,11 @@ class Robinhood:
         
         return []
     
-    def get_most_popular_instruments(self, top_x=10, url_only=False):
+    def get_most_popular_instruments(self, top_x=10, url_only=False, print_to_console=True):
         """
         Retrieve a list of the most popular instruments.
+
+        NOTE: This method may take a long time to complete if API delay is set and top_x is large.
 
         Parameters
         ----------
@@ -183,7 +185,11 @@ class Robinhood:
 
         x = 0
         results = []
+        print(f"Starting retrieval of top {top_x} popular instruments...") if print_to_console else None
         while x < top_x:
+            if x != 0 and x % 5 == 0 and print_to_console:
+                print(f"Retrieved {x} of {top_x}...")
+
             results.append(
                 self._unauthenticated_call(
                     url=top_100_results[x],
