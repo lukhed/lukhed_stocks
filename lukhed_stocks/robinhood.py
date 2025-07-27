@@ -160,7 +160,7 @@ class Robinhood:
         Parameters
         ----------
         top_x : int
-            The number of top instruments to retrieve. 1 to 100. Default is 10 (top 10 is returned).
+            The number of top instruments to retrieve. 1 to 100. Default is 100.
         return_symbols_only : bool
             If True, only the symbols of the instruments will be returned. Default is False.
 
