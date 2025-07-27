@@ -27,6 +27,8 @@ pip install lukhed-stocks
 - [Wikipedia Stocks](#wikipedia-stocks) - For obtaining various stock data from Wikipedia (various pages)
 - [Schwab Wrapper](#schwab-wrapper) - Wrapper for [schwab-py wrapper](https://pypi.org/project/schwab-py/). Adds key 
   management and convenience functions to the unopinionated wrapper which provides auth, quotes, history, options, account info and more.
+- [Robinhood Wrapper](#robinhood-wrapper) - Wrapper for Robinhood's public API endpoints. Provides access to stock 
+  data, fundamentals, charts, and popular stock lists without requiring authentication. Auth methods coming later.
 
 
 ## Ticker Functions
@@ -128,6 +130,52 @@ My wrapper is built for key management, advanced analysis, and ease of use. The 
 schwab.api.get_price_history_every_minute("ALLT")
 ```
 
+## Robinhood Wrapper
+
+### Setup
+No authentication required. The wrapper provides access to Robinhood's public API endpoints.
+
+```python
+from lukhed_stocks.robinhood import Robinhood
+
+rh = Robinhood()
+```
+
+### Basic Usage Examples
+```python
+# Get basic instrument data
+basic_data = rh.get_basic_data('AAPL')
+multiple_stocks = rh.get_basic_data(['AAPL', 'TSLA', 'MSFT'])
+
+# Get fundamental data
+fundamentals = rh.get_fundamentals('AAPL')
+
+# Get chart data for different time spans
+daily_chart = rh.get_basic_chart_data('AAPL', span='day')
+yearly_chart = rh.get_basic_chart_data('AAPL', span='year', extended_hours=True)
+```
+
+### Popular Lists
+```python
+# Get most held stocks on Robinhood
+top_50 = rh.get_most_held_instruments(top_x=50)
+symbols_only = rh.get_most_held_instruments(return_symbols_only=True)
+
+# Search for instruments
+search_results = rh.search_instruments_by_symbol_keyword('TECH')
+```
+
+### API Rate Limiting
+The wrapper includes built-in rate limiting to be respectful of Robinhood's servers.
+
+```python
+# Adjust delay between API calls (default is 0.5 seconds)
+rh = Robinhood(api_delay=1.0)
+
+# Disable user agent randomization if needed
+rh = Robinhood(random_user_agent=False)
+```
+
 
 ## Responsible Data Usage
 - Each method or wrapper in the documentation lists the source that is utilized by default
@@ -144,6 +192,9 @@ For more details on the terms of use, please refer to the
 ### Synth
 Full Synth terms are found [here](https://synthfinance.com/terms). This library provides access to synth:
 - Images, free to use if attribution is provided (please confirm with synthfinance.com or the terms above)
+
+### Robinhood Data Usage
+Data is accessed through Robinhood's public API endpoints without authentication. This wrapper is intended for educational and research purposes. Please respect Robinhood's terms of service and API usage guidelines. Users are responsible for ensuring their usage complies with Robinhood's policies.
 
 ### Tradingview Data Usage
 I am currently trying to remove trading view as a source, as their policy is restrictive and confusing. Please read [trading view policies here](https://www.tradingview.com/policies/)
