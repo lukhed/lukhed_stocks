@@ -153,9 +153,44 @@ class Robinhood:
         
         return []
     
-    def get_most_popular_instruments(self, top_x=100, return_symbols_only=False):
+    def get_fundamental_data_by_symbol(self, symbol):
         """
-        Retrieve a list of the most popular instruments.
+        Retrieve fundamental data for an instrument by its symbol.
+
+        Parameters
+        ----------
+        symbol : str, list
+            The stock symbol of the instrument or a list of symbols.
+
+        Returns
+        -------
+        dict
+            A dictionary containing the fundamental data if found, otherwise None.
+        """
+        url = 'https://api.robinhood.com/fundamentals/?symbols='
+        if isinstance(symbol, list):
+            url += ','.join(symbol)
+        else:
+            url += symbol
+
+        r = self._unauthenticated_call(url, method="GET")
+        
+        try:
+            results = r['results']
+        except KeyError:
+            results = []
+
+        if isinstance(symbol, list):
+            for i, s in enumerate(symbol):
+                results[i] = {'symbol': s, **results[i]}
+
+        
+        return results
+    
+    def get_most_held_instruments(self, top_x=100, return_symbols_only=False):
+        """
+        Retrieves the top 100 most popular instruments list which is defined by robinhood:
+        'By popular demand. See which stocks and ETFs are most commonly held by Robinhood customers.'.
 
         Parameters
         ----------
