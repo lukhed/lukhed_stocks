@@ -153,24 +153,22 @@ class Robinhood:
         
         return []
     
-    def get_most_popular_instruments(self, top_x=10, url_only=False, print_to_console=True):
+    def get_most_popular_instruments(self, top_x=100, return_symbols_only=False):
         """
         Retrieve a list of the most popular instruments.
-
-        NOTE: This method may take a long time to complete if API delay is set and top_x is large.
 
         Parameters
         ----------
         top_x : int
             The number of top instruments to retrieve. 1 to 100. Default is 10 (top 10 is returned).
-        url_only : bool
-            If True, only the URLs of the instruments will be returned. Default is False.
+        return_symbols_only : bool
+            If True, only the symbols of the instruments will be returned. Default is False.
 
         Returns
         -------
         list
             A list of the most popular instruments, each represented as a dictionary.
-            If url_only is True, returns a list of URLs to the instrument details instead.
+            If return_symbols_only is True, returns a list of symbols of the instruments instead.
         """
         url = "https://api.robinhood.com/midlands/tags/tag/100-most-popular/"
         r = self._unauthenticated_call(url, method="GET")
@@ -180,22 +178,31 @@ class Robinhood:
         else:
             top_100_results = []
 
-        if url_only:
-            return top_100_results[:top_x]
-
-        x = 0
-        results = []
-        print(f"Starting retrieval of top {top_x} popular instruments...") if print_to_console else None
-        while x < top_x:
-            if x != 0 and x % 5 == 0 and print_to_console:
-                print(f"Retrieved {x} of {top_x}...")
-
-            results.append(
-                self._unauthenticated_call(
-                    url=top_100_results[x],
-                    method="GET"
-                )
+        if top_x > 75:
+            url1 = [x.split('/')[-2] for x in top_100_results[:74]]
+            url2 = [x.split('/')[-2] for x in top_100_results[74:]]
+            res1 = self._unauthenticated_call(
+                'https://api.robinhood.com/instruments/?ids=' + '%2C'.join(url1),
+                method="GET"
             )
-            x += 1
+            res2 = self._unauthenticated_call(
+                'https://api.robinhood.com/instruments/?ids=' + '%2C'.join(url2),
+                method="GET"
+            )
+            try:
+                results = res1['results'] + res2['results']
+            except KeyError:
+                results = [ ]
+        else:
+            ids = [x.split('/')[-2] for x in top_100_results]
+            url = 'https://api.robinhood.com/instruments/?ids=' + '%2C'.join(ids[:top_x])
+            results = self._unauthenticated_call(url, method="GET")
+            try:
+                results = results['results']
+            except KeyError:
+                results = []
+
+        if return_symbols_only:
+            results = [x['symbol'] for x in results]
         
         return results
