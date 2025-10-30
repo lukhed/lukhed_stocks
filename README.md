@@ -29,6 +29,7 @@ pip install lukhed-stocks
   management and convenience functions to the unopinionated wrapper which provides auth, quotes, history, options, account info and more.
 - [Robinhood Wrapper](#robinhood-wrapper) - Wrapper for Robinhood's public API endpoints. Provides access to stock 
   data, fundamentals, charts, and popular stock lists without requiring authentication. Auth methods coming later.
+- [Polygon.io Wrapper](#polygonio-wrapper) - Wrapper for Polygon.io's API. Provides free access to market status and holiday information with up to 5 API requests per minute and 500 requests per day.
 
 
 ## Ticker Functions
@@ -177,12 +178,63 @@ rh = Robinhood(random_user_agent=False)
 ```
 
 
+## Polygon.io Wrapper
+
+### Setup
+Setup the API auth once and use it across hardware. To setup, instantiate the class and follow the prompts to enter 
+your [Polygon.io API key](https://polygon.io/dashboard/keys). By default, your private github repo is used for key 
+management (you will need a github account and token).
+
+```python
+# Github setup
+from lukhed_stocks.polygon import PolygonIo
+
+# Default instantiation uses github key_management
+poly = PolygonIo()
+```
+
+```python
+# If you want to use local hardware key storage only
+poly = PolygonIo(key_management='local')
+```
+
+### Usage Examples After Setup
+```python
+poly = PolygonIo()
+
+# Get current market status
+market_status = poly.get_market_status_now()
+
+# Get upcoming market holidays
+holidays = poly.get_upcoming_market_holidays()
+
+# Check if market is open today
+is_open = poly.is_market_open_today()
+```
+
+### API Rate Limiting
+The wrapper includes built-in rate limiting. The free tier allows 5 API requests per minute and 500 requests per day.
+
+```python
+# Adjust delay between API calls (default is 1 second)
+poly = PolygonIo(api_delay=2.0)
+```
+
+### Skip Setup with Auth Dictionary
+```python
+# Provide auth data directly to skip setup prompts
+auth_data = {"key": "your_api_key_here"}
+poly = PolygonIo(auth_dict=auth_data)
+```
+
+
 ## Responsible Data Usage
 - Each method or wrapper in the documentation lists the source that is utilized by default
 - Below is information related to data retrieval and usage for each source
 
 ### CAT Data Usage
-CAT Data is pulled from [this page](https://www.catnmsplan.com/reference-data). They provide a [legal notice here](https://www.catnmsplan.com/legal-notice).
+CAT Data is pulled from [this page](https://www.catnmsplan.com/reference-data). They provide 
+a [legal notice here](https://www.catnmsplan.com/legal-notice).
 
 ### Wikipedia Data Usage
 Wikipedia content is licensed under the Creative Commons Attribution-ShareAlike 3.0 Unported License. 
@@ -194,7 +246,15 @@ Full Synth terms are found [here](https://synthfinance.com/terms). This library 
 - Images, free to use if attribution is provided (please confirm with synthfinance.com or the terms above)
 
 ### Robinhood Data Usage
-Data is accessed through Robinhood's public API endpoints without authentication. This wrapper is intended for educational and research purposes. Please respect Robinhood's terms of service and API usage guidelines. Users are responsible for ensuring their usage complies with Robinhood's policies.
+Data is accessed through Robinhood's public API endpoints without authentication. This wrapper is intended for 
+educational and research purposes. Please respect Robinhood's terms of service and API usage guidelines. 
+Users are responsible for ensuring their usage complies with Robinhood's policies.
+
+### Polygon.io Data Usage
+Data is accessed through Polygon.io's API. Free tier provides up to 5 API requests per minute and 500 requests per day. 
+For higher volume usage, please visit [Polygon.io's pricing page](https://polygon.io/pricing). 
+Users are responsible for ensuring their usage complies with Polygon.io's terms of service and API usage limits.
 
 ### Tradingview Data Usage
-I am currently trying to remove trading view as a source, as their policy is restrictive and confusing. Please read [trading view policies here](https://www.tradingview.com/policies/)
+I am currently trying to remove trading view as a source, as their policy is restrictive and confusing. 
+Please read [trading view policies here](https://www.tradingview.com/policies/)
