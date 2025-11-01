@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="lukhed_stocks",
-    version="0.2.3",
+    version="0.2.4",
     description="A collection of stock analysis functions and api wrappers",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",

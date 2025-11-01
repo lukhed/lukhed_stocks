@@ -180,7 +180,7 @@ class TradingView:
         }
 
         if add_filters is not None:
-            self.add_screener_filters(add_filters)
+            self.add_screener_filter_to_filter(add_filters)
 
         """
         Add any index filters
@@ -286,6 +286,8 @@ class TradingView:
         :param add_filters:        dict() or list(). Provide the filter(s) to add to the base screener filter.
         :return:                    None
         """
+        if self.screener_filter is None:
+            self.screener_filter = []
 
         if add_filters is None:
             pass
@@ -293,6 +295,9 @@ class TradingView:
             self.screener_filter.append(add_filters)
         else:
             [self.screener_filter.append(x) for x in add_filters]
+
+        if self.screener_filter == []:
+            self.screener_filter = None
 
     def reset_screener_filters(self):
         """
