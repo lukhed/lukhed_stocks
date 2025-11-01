@@ -278,7 +278,7 @@ class TradingView:
 
     #####################
     # SCREENER SETTINGS
-    def add_screener_filters(self, add_filters):
+    def add_screener_filter_to_filter(self, add_filters):
         """
         This function will add filters to filter. All screens performed after running the add will 
         have the additional filters.

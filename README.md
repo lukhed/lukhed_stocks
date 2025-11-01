@@ -30,6 +30,8 @@ pip install lukhed-stocks
 - [Robinhood Wrapper](#robinhood-wrapper) - Wrapper for Robinhood's public API endpoints. Provides access to stock 
   data, fundamentals, charts, and popular stock lists without requiring authentication. Auth methods coming later.
 - [Polygon.io Wrapper](#polygonio-wrapper) - Wrapper for Polygon.io's API. Provides free access to market status and holiday information with up to 5 API requests per minute and 500 requests per day.
+- [TradingView Wrapper](#tradingview-wrapper) - Wrapper for TradingView's stock screener. Provides access to 
+  stock lists, filters by sector/industry, and customizable screening criteria.
 
 
 ## Ticker Functions
@@ -226,6 +228,99 @@ poly = PolygonIo(api_delay=2.0)
 auth_data = {"key": "your_api_key_here"}
 poly = PolygonIo(auth_dict=auth_data)
 ```
+
+
+## TradingView Wrapper
+
+### Setup
+No authentication required. The wrapper provides access to TradingView's stock screener endpoints.
+
+```python
+from lukhed_stocks.tradingview import TradingView
+
+tv = TradingView()
+```
+
+### Basic Usage Examples
+```python
+# Get all stocks with default TradingView filters and columns
+all_stocks = tv.screener_get_all_stocks()
+
+# Get stocks by index
+dow_stocks = tv.screener_get_stocks_by_index('dow')
+sp500_stocks = tv.screener_get_stocks_by_index('s&p')
+nasdaq_stocks = tv.screener_get_stocks_by_index('nasdaq')
+russell_stocks = tv.screener_get_stocks_by_index('russel 2000')
+
+# Get stocks at new highs or lows
+new_52w_highs = tv.screener_new_highs_lows(new_high_or_low='high', month_time_frame=12)
+new_3m_lows = tv.screener_new_highs_lows(new_high_or_low='low', month_time_frame=3)
+all_time_highs = tv.screener_new_highs_lows(new_high_or_low='high', month_time_frame='all time')
+```
+
+### Filtering Stock Lists
+```python
+# Filter by sector or industry
+tech_stocks = tv.filter_stock_list_by_sector('Technology', all_stocks['data'])
+multiple_sectors = tv.filter_stock_list_by_sector(['Healthcare', 'Finance'], all_stocks['data'])
+industry_filtered = tv.filter_stock_list_by_industry('Software', all_stocks['data'])
+
+# Get sector/industry information
+sectors = tv.get_all_sectors_in_list(all_stocks['data'])
+industries = tv.get_all_industries_in_list(all_stocks['data'])
+breakdown = tv.get_sector_industry_breakdown_of_list(all_stocks['data'])
+tickers = tv.get_unique_stock_tickers_in_list(all_stocks['data'])
+```
+
+### Customizing Screener Columns
+```python
+# Use predefined column sets
+tv.set_stock_screener_columns_overview()
+tv.set_stock_screener_columns_performance()
+tv.set_stock_screener_columns_valuation()
+tv.set_stock_screener_columns_dividends()
+tv.set_stock_screener_columns_technicals()
+tv.set_stock_screener_columns_profitiability()
+tv.set_stock_screener_columns_per_share()
+
+# Add custom columns
+tv.custom_define_columns(["name", "description", "Perf.W", "Perf.1M", "Perf.3M", "Perf.6M", "Perf.YTD", "exchange"])
+
+# Add to existing columns instead of replacing
+tv.set_stock_screener_columns_time_period_performance(add_to_current_columns=True)
+
+# Reset to defaults
+tv.reset_screener_columns()
+```
+
+### Custom Filters
+```python
+# Add custom filters
+custom_filter = {
+    "left": "market_cap_basic",
+    "operation": "egreater",
+    "right": 1000000000
+}
+tv.add_screener_filters(custom_filter)
+
+# Reset filters to default
+tv.reset_screener_filters()
+
+# Clear all filters
+tv.clear_screener_filters()
+
+# Set completely custom filter
+tv.set_custom_screener_filter(custom_filter)
+```
+
+### Supported Index Filters
+The wrapper supports filtering by the following indices (check `tv.index_lookup` for full list):
+- Dow Jones: `'dow'`
+- S&P 500: `'s&p'`
+- Nasdaq Composite: `'nasdaq'`
+- Nasdaq 100: `'nasdaq 100'`
+- Russell 2000: `'russel 2000'`
+- And many more sector-specific indices
 
 
 ## Responsible Data Usage
