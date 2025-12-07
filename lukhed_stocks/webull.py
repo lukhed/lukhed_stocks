@@ -43,7 +43,7 @@ class Webull:
             if refresh_basics_cache:
                 self.basics_cache = {}
                 fC.dump_json_to_file(self.basics_cache_loc, self.basics_cache)
-                
+
             if osC.check_if_file_exists(self.basics_cache_loc):
                 self.basics_cache = fC.load_json_from_file(self.basics_cache_loc)
             else:
@@ -169,7 +169,7 @@ class Webull:
         search_response = rC.request_json(self.base_api_url + search_url, add_user_agent=True)
         try:
             ticker_find = search_response['data'][0]
-        except KeyError or IndexError:
+        except Exception as e:
             self._error_dict["error"] = True
             self._error_dict["errorMessage"] = "Could not find ticker using webull search api=" + symbol
             self._error_dict["searchedSymbol"] = symbol
@@ -187,20 +187,24 @@ class Webull:
             self._error_dict["searchedSymbol"] = symbol
             return self._error_dict.copy()
 
-    def _call_webull_for_quote(self, symbol):
-        # Get basic data. If delay is in use, this function will have that delay as it calls webull
-        ticker_basics = self._call_webull_for_ticker_lookup(symbol)
-        if ticker_basics is None:
-            return self._error_dict.copy()
+    def _call_webull_for_quote(self, symbol, provide_id=None):
 
-        # Get ticker Id
-        try:
-            ticker_id = str(ticker_basics['tickerId'])
-        except KeyError:
-            self._error_dict["error"] = True
-            self._error_dict["errorMessage"] = "No ticker ID available for " + symbol
-            self._error_dict["searchedSymbol"] = symbol
-            return self._error_dict.copy()
+        if provide_id is None:
+            # Get basic data. If delay is in use, this function will have that delay as it calls webull
+            ticker_basics = self._call_webull_for_ticker_lookup(symbol)
+            if ticker_basics is None:
+                return self._error_dict.copy()
+
+            # Get ticker Id
+            try:
+                ticker_id = str(ticker_basics['tickerId'])
+            except KeyError:
+                self._error_dict["error"] = True
+                self._error_dict["errorMessage"] = "No ticker ID available for " + symbol
+                self._error_dict["searchedSymbol"] = symbol
+                return self._error_dict.copy()
+        else:
+            ticker_id = str(provide_id)
 
         # Craft URL for quote
         q_url_1 = 'stock/tickerRealTime/getQuote?tickerId='
@@ -231,17 +235,80 @@ class Webull:
         if self._error_dict["error"]:
             print("Last error logged is: " + self._error_dict["errorMessage"])
 
-    def get_quote(self, symbol):
+    def _call_webull_for_multiple_symbol_quote(self, symbol_ids):
+        # Craft URL for quote
+        q_url_1 = 'bgw/quote/realtime?ids='
+        q_url_2 = '&includeSecu=1&delay=0&more=1'
+
+        quote_url = (self.base_api_url + q_url_1 + '%2C'.join(symbol_ids) + q_url_2)
+        
+        self._check_add_delay()
+        try:
+            quotes = rC.request_json(quote_url, add_user_agent=True)
+            [x.update({"error": False, "errorMessage": None}) for x in quotes]
+        except:
+            self._error_dict["error"] = True
+            self._error_dict["errorMessage"] = "Error in using webull quote api for " + symbol_ids
+            self._error_dict["searchedSymbol"] = symbol_ids
+            return self._error_dict.copy()
+
+        return quotes
+    
+    def get_quote(self, symbol, ids_provided=False):
         """
-        Use this function if you just want the basics for a ticker and no additional market data.
-        :param symbol:
-        :return:
+        Get real time quote for a symbol or list of symbols.
+
+        Parameters
+        ----------
+        symbol : str or list of str
+            The symbol or list of symbols to get quotes for.
+
+        Returns
+        -------
+        dict or list of dict
+            Real time quote data from Webull. If a list of symbols is provided, a list of quote dictionaries 
+            is returned. Each dictionary contains various fields such as price, volume, exchange, etc.
         """
 
-        symbol = self._parse_symbol(symbol)
-        cache_result = self._check_cache_before_calling("quote", symbol)
-        if cache_result is not None:
-            return cache_result
+        if type(symbol) == str:
+            symbol = self._parse_symbol(symbol)
+            cache_result = self._check_cache_before_calling("quote", symbol)
+            if cache_result is not None:
+                return cache_result
+            else:
+                return self._call_webull_for_quote(symbol)
         else:
-            return self._call_webull_for_quote(symbol)
+            if ids_provided:
+                symbol_ids = symbol
+            else:
+                symbols = [self._parse_symbol(x) for x in symbol]
+                symbol_ids = [self._call_webull_for_ticker_lookup(x) for x in symbols]
+            
+            return self._call_webull_for_multiple_symbol_quote(symbol_ids)
+        
+    def get_indice_data(self):
+        """
+        Get real time quote data for major indices: Dow Jones Industrial Average (DJI), Nasdaq Composite (NASDAQ),
+        S&P 500 (SPX), and Russell 2000 (RUT).
+
+        Returns
+        -------
+        dict
+            A dictionary containing real time quote data for each index with keys 'dji', 'nasdaq', 'spx', and 'rut'. 
+            Each value is a dictionary of quote data from Webull for the respective index.
+        """
+        dji = '913353822'
+        nasdaq = '913354090'
+        spx = '913354362'
+        rut = '925343903'
+        raw_quotes = self.get_quote([dji, nasdaq, spx, rut], ids_provided=True)
+        
+        indice_dict = {
+            "dji": raw_quotes[0],
+            "nasdaq": raw_quotes[1],
+            "spx": raw_quotes[2],
+            "rut": raw_quotes[3]
+        }
+        
+        return indice_dict
         
