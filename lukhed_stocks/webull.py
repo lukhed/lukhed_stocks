@@ -2,6 +2,7 @@ from lukhed_basic_utils import requestsCommon as rC
 from lukhed_basic_utils import timeCommon as tC
 from lukhed_basic_utils import osCommon as osC
 from lukhed_basic_utils import fileCommon as fC
+import pandas as pd
 
 class Webull:
     def __init__(self, api_delay=0.5, keep_live_cache=False, use_basics_cache=False, refresh_basics_cache=False):
@@ -254,6 +255,104 @@ class Webull:
 
         return quotes
     
+    def _call_webull_for_history(self, symbol, interval, points, id_provided, change_type=None):
+        """
+
+        Parameters
+        ----------
+        symbol : str
+            symbol or id of the stock to get history for
+        interval : str
+        points : int
+            number of data points to retrieve
+        id_provided : bool
+            whether the symbol parameter is an ID or not
+
+        Returns
+        -------
+        dict
+            A dictionary containing price and dividend history data.
+        """
+
+        url_type = 1 if change_type is None else change_type
+        url_lf = "&loadFactor=1" if url_type == 1 else ""
+
+        url_1 = f'quote/charts/query-mini?type={interval}&count={points}&restorationType={url_type}{url_lf}&tickerId='
+
+        if id_provided:
+            url = self.base_api_url + url_1 + str(symbol)
+        else:
+            tick_id = self._call_webull_for_ticker_lookup(symbol)['tickerId']
+            url = self.base_api_url + url_1 + str(tick_id)
+
+        data = rC.request_json(url, add_user_agent=True)
+        try:
+            price_history = data[0]['data']
+            price_history = [x.split(",") for x in price_history]
+            for price in price_history:
+                price[0] = tC.datetime.fromtimestamp(int(price[0]))
+        except Exception as e:
+            self._error_dict["error"] = True
+            self._error_dict["errorMessage"] = "Could not get history data from webull for " + str(symbol)
+            self._error_dict["searchedSymbol"] = symbol
+            price_history = None
+        
+        try:
+            dividend_history = data[0]['dividend']
+        except Exception as e:
+            dividend_history = None
+
+        if price_history is None and dividend_history is None:
+            return self._error_dict.copy()
+        else:
+            return {"priceHistory": price_history, "dividendHistory": dividend_history}
+    
+    def _parse_interval_input(self, interval):
+        """
+        Checks for valid interval and makes changes for url as necessary
+
+        Parameters
+        ----------
+        interval : str
+            q (quarterly), y1 (yearly), mth1 (monthly), w1 (weekly), d1 (daily), 
+            h4 (every 4 hours), h2 (every 2 hours), h1 (hourly), m30 (30 minutes), m15 (15 minutes), m5 (5 minutes), 
+            m1 (1 minute).
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
+        interval = interval.lower()
+        if interval == 'q':
+            interval = 'm3'
+        elif interval == 'y1':
+            pass
+        elif interval == 'mth1':
+            pass
+        elif interval == 'w1':
+            pass
+        elif interval == 'd1':
+            pass
+        elif interval == 'h1':
+            interval = 'm60'
+        elif interval == 'h4':
+            interval = 'm240'
+        elif interval == 'h2':
+            interval = 'm120'
+        elif interval == 'm30':
+            pass
+        elif interval == 'm15':
+            pass
+        elif interval == 'm5':
+            pass
+        elif interval == 'm1':
+            pass
+        else:
+            # raise warning only
+            print("Warning: Interval " + interval + " not recognized. Your input may not be valid causing issues.")
+        return interval
+    
     def get_quote(self, symbol, ids_provided=False):
         """
         Get real time quote for a symbol or list of symbols.
@@ -286,7 +385,7 @@ class Webull:
             
             return self._call_webull_for_multiple_symbol_quote(symbol_ids)
         
-    def get_indice_data(self):
+    def get_indice_prices(self):
         """
         Get real time quote data for major indices: Dow Jones Industrial Average (DJI), Nasdaq Composite (NASDAQ),
         S&P 500 (SPX), and Russell 2000 (RUT).
@@ -309,6 +408,77 @@ class Webull:
             "spx": raw_quotes[2],
             "rut": raw_quotes[3]
         }
-        
+
         return indice_dict
+    
+    def get_indice_price_history(self, indice_symbol, interval='d1', points=800):
+        """
+        Get price history for major indices: Dow Jones Industrial Average (DJI), Nasdaq Composite (NASDAQ),
+        S&P 500 (SPX), and Russell 2000 (RUT).
+
+        Parameters
+        ----------
+        indice_symbol : str
+            The indice symbol to get history for. Must be one of: 'dji', 'nasdaq', 'spx', 'rut'.
+        interval : str, optional
+            q (quarterly), y1 (yearly), mth1 (monthly), w1 (weekly), d1 (daily), 
+            h4 (every 4 hours), h2 (every 2 hours), h1 (hourly), m30 (30 minutes), m15 (15 minutes), m5 (5 minutes), 
+            m1 (1 minute). By default '1d' (daily).
+        points : int, optional
+            The number of data points to retrieve, by default 800
+        """
+        indice_symbol = indice_symbol.lower()
+        if indice_symbol == 'dji':
+            symbol = '913353822'
+        elif indice_symbol == 'nasdaq':
+            symbol = '913354090'
+        elif indice_symbol == 'spx':
+            symbol = '913354362'
+        elif indice_symbol == 'rut':
+            symbol = '925343903'
+        else:
+            raise ValueError("Invalid indice symbol. Must be one of: 'dji', 'nasdaq', 'spx', 'rut'.")
+        
+        interval = self._parse_interval_input(interval)
+        
+        return self._call_webull_for_history(symbol, interval, points, True)
+    
+    def get_price_history(self, symbol, interval='d1', points=800, id_provided=False, return_type='df'):
+        """
+        Get price history and dividend history for a symbol.
+
+        Parameters
+        ----------
+        symbol : str or int
+            The stock symbol or Webull ticker ID to get history for.
+        interval : str, optional
+            q (quarterly), y1 (yearly), mth1 (monthly), w1 (weekly), d1 (daily), 
+            h4 (every 4 hours), h2 (every 2 hours), h1 (hourly), m30 (30 minutes), m15 (15 minutes), m5 (5 minutes), 
+            m1 (1 minute). By default '1d' (daily).
+        points : int, optional
+            The number of data points to retrieve, by default 800
+        id_provided : bool, optional
+            Whether the symbol provided is a Webull ticker ID, by default False
+        return_type : str, optional
+            The format to return the data in, either 'df' for DataFrame or 'raw' for raw data, by default 'df'
+
+        Returns
+        -------
+        pd.DataFrame or dict
+            Price history and dividend history data in the requested format. The data includes fields:
+            'datetime', 'open', 'close', 'high', 'low', 'previous close', and 'volume'. If raw data is preferred, 
+            an additional 'unknown1' field is included.
+        """
+
+        interval = self._parse_interval_input(interval)
+        price_history = self._call_webull_for_history(symbol, interval, points, id_provided)
+        # convert to dataframe if requested and drop the last column which is unknown
+        if return_type == 'df':
+            price_history_df = pd.DataFrame(price_history['priceHistory'], columns=[
+                'datetime', 'open', 'close', 'high', 'low', 'previous close', 'volume', 'unknown1'
+            ])
+            price_history_df = price_history_df.drop(columns=['unknown1'])
+            return price_history_df
+        else:
+            return price_history
         
