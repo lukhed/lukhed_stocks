@@ -12,15 +12,22 @@ pip install lukhed-stocks
 
 ## TOC
 <!-- no toc -->
-[Available Functions](#available-functions)<br>
+[No API Key Market Data](#no-api-key-market-data)<br>
 [Available Wrappers](#available-wrappers)<br>
 [Responsible Data Usage](#responsible-data-usage)
 
-## Available Functions
-- [Ticker Data Functions](#ticker-functions) - Utilizing various sources (default sources require no api key).
+## No API Key Market Data
+Access market data without requiring API keys or authentication. This section includes utility functions for 
+obtaining ticker lists and a unified interface for real-time quotes, price history, and fundamental data.
+
+- [Ticker Data Functions](#ticker-functions) - Get lists of stock tickers by exchange or index, plus company logos. 
+  Utilizes various public sources that don't require API keys.
   - [Get Tickers By Exchange](#get-tickers-by-exchange)
   - [Get Tickers By Index](#get-tickers-by-index)
   - [Get Company Logo by Ticker](#get-company-logo-by-ticker)
+
+- [Market Data](#marketdata) - Unified interface for accessing real-time quotes, price history, index data, and 
+  fundamentals from multiple sources (Webull, Robinhood) without managing individual wrapper instances or API keys.
   
 ## Available Wrappers
 - [CAT Wrapper](#cat-wrapper) - Conolidated Audit Trail (CAT) for exchange data provided by [CAT Webpage](https://catnmsplan.com/)
@@ -29,6 +36,8 @@ pip install lukhed-stocks
   management and convenience functions to the unopinionated wrapper which provides auth, quotes, history, options, account info and more.
 - [Robinhood Wrapper](#robinhood-wrapper) - Wrapper for Robinhood's public API endpoints. Provides access to stock 
   data, fundamentals, charts, and popular stock lists without requiring authentication. Auth methods coming later.
+- [Webull Wrapper](#webull-wrapper) - Wrapper for Webull's public API endpoints. Provides access to real-time quotes, 
+  price history, and index data without requiring authentication.
 - [Polygon.io Wrapper](#polygonio-wrapper) - Wrapper for Polygon.io's API. Provides free access to market status and holiday information with up to 5 API requests per minute and 500 requests per day.
 - [TradingView Wrapper](#tradingview-wrapper) - Wrapper for TradingView's stock screener. Provides access to 
   stock lists, filters by sector/industry, and customizable screening criteria.
@@ -178,6 +187,112 @@ rh = Robinhood(api_delay=1.0)
 # Disable user agent randomization if needed
 rh = Robinhood(random_user_agent=False)
 ```
+
+
+## Webull Wrapper
+
+### Setup
+No authentication required. The wrapper provides access to Webull's public API endpoints.
+
+```python
+from lukhed_stocks.webull import Webull
+
+wb = Webull()
+```
+
+### Basic Usage Examples
+```python
+# Get real-time quote for a single stock
+quote = wb.get_quote('AAPL')
+
+# Get quotes for multiple stocks
+quotes = wb.get_quote(['AAPL', 'TSLA', 'MSFT'], ids_provided=False)
+
+# Get major indices data (DJI, NASDAQ, SPX, RUT)
+indices = wb.get_indice_data()
+
+# Get price history for a stock
+history = wb.get_price_history('AAPL', interval='1d', points=800)
+
+# Get price history for an index
+index_history = wb.get_indice_price_history('spx', interval='1d', points=800)
+
+# Get just the prices for major indices
+index_prices = wb.get_indice_prices()
+```
+
+### Cache Options
+Speed up repeated calls by using cache functionality.
+
+```python
+# Enable live cache for repeated symbol lookups
+wb = Webull(keep_live_cache=True)
+
+# Enable basics cache (saved to disk for cross-session use)
+wb = Webull(use_basics_cache=True)
+
+Note: Webull api calls require symbol id's, so the wrapper uses an API call to retrieve the proper id based on input. 
+Using basics cache allows saving API calls by storing the symbol to id mapping.
+
+# Refresh the basics cache
+wb = Webull(use_basics_cache=True, refresh_basics_cache=True)
+```
+
+### API Rate Limiting
+```python
+# Adjust delay between API calls (default is 0.5 seconds)
+wb = Webull(api_delay=1.0)
+```
+
+
+## MarketData
+
+### Setup
+The MarketData class provides a unified interface for accessing market data from multiple sources without 
+managing individual wrapper instances. No authentication required for default sources.
+
+```python
+from lukhed_stocks.marketdata import MarketData
+
+md = MarketData()
+```
+
+### Basic Usage Examples
+```python
+# Get major indices prices (default: Webull)
+indices = md.get_indice_prices()
+
+# Get real-time quote
+quote = md.get_quote('AAPL')
+multiple_quotes = md.get_quote(['AAPL', 'TSLA', 'MSFT'])
+
+# Get price history
+history = md.get_price_history('AAPL', interval='d1', points=800)
+
+# Get index price history
+index_history = md.get_indice_price_history('spx', interval='d1', points=800)
+
+# Get fundamental data (default: Robinhood)
+fundamentals = md.get_fundamentals('AAPL')
+
+# Get basic stock information (default: Robinhood)
+basic_info = md.get_basic_info('AAPL')
+```
+
+### Specifying Data Sources
+```python
+# Specify source explicitly
+quote_webull = md.get_quote('AAPL', source='webull')
+fundamentals_rh = md.get_fundamentals('AAPL', source='robinhood')
+```
+
+### Supported Sources
+- `get_indice_prices()`: Webull
+- `get_quote()`: Webull
+- `get_price_history()`: Webull
+- `get_indice_price_history()`: Webull
+- `get_fundamentals()`: Robinhood
+- `get_basic_info()`: Robinhood
 
 
 ## Polygon.io Wrapper
@@ -353,3 +468,8 @@ Users are responsible for ensuring their usage complies with Polygon.io's terms 
 ### Tradingview Data Usage
 I am currently trying to remove trading view as a source, as their policy is restrictive and confusing. 
 Please read [trading view policies here](https://www.tradingview.com/policies/)
+
+### Webull Data Usage
+Data is accessed through Webull's public API endpoints without authentication. This wrapper is intended for 
+educational and research purposes. Please respect Webull's terms of service and API usage guidelines. 
+Users are responsible for ensuring their usage complies with Webull's policies.
