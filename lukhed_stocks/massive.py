@@ -16,7 +16,6 @@ class Massive(LukhedAuth):
 
         self.api_key = self._auth_data['key']
         self.client = RESTClient(api_key=self.api_key)
-        stop = 1
 
     def _auth_setup(self):
         """
@@ -57,7 +56,6 @@ class Massive(LukhedAuth):
                 tC.sleep(12.5)
 
         return [{"name": x.name, "ticker": x.ticker, "locale": x.locale, "active": x.active} for x in tickers]
-        stop = 1
 
     def get_indice_snapshot(self, custom_index_list=None):
         """
