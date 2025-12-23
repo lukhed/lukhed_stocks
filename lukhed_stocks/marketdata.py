@@ -1,5 +1,6 @@
 from lukhed_stocks.webull import Webull
 from lukhed_stocks.robinhood import Robinhood
+from lukhed_stocks.cnn import CNN
 from typing import Optional
 
 # A bunch of functions to retrieve market data (quotes, price history etc.) without an API
@@ -8,6 +9,7 @@ class MarketData:
     def __init__(self):
         self.webull = None      # type: Optional[Webull]
         self.robinhood = None   # type: Optional[Robinhood]
+        self.cnn = None         # type: Optional[CNN]
     
     def _check_create_webull(self):
         if self.webull is None:
@@ -17,14 +19,18 @@ class MarketData:
         if self.robinhood is None:
             self.robinhood = Robinhood()
     
-    def get_indice_prices(self, source='webull'):
+    def _check_create_cnn(self):
+        if self.cnn is None:
+            self.cnn = CNN()
+    
+    def get_indice_prices(self, source='cnn'):
         """
         Get the latest prices for major indices from the specified source.
 
         Parameters
         ----------
         source : str, optional
-            Data source, by default 'webull'. Options: 'webull'
+            Data source, by default 'cnn'. Options: 'cnn', 'webull'
 
         Returns
         -------
@@ -36,8 +42,11 @@ class MarketData:
         ValueError
             If the specified source is not supported.
         """
-        
-        if source == 'webull':
+        source = source.lower()
+        if source == 'cnn':
+            self._check_create_cnn()
+            return self.cnn.get_major_indices()
+        elif source == 'webull':
             self._check_create_webull()
             return self.webull.get_indice_prices()
         else:

@@ -52,20 +52,19 @@ class PolygonIo(classCommon.LukhedAuth):
         ----------
         None
         """
-        if self._auth_dict is None:
-            # Walk the user through the basic auth setup
-            input("Polygon requires an API key (https://polygon.io/dashboard/keys). You will be asked " \
-            "to paste your key in the next step. It will be stored for future use based on your instantiation " \
-            "parameters (stored on local machine or your private github). Press enter to start.")
-            key = input("Enter key: ")
+        # Walk the user through the basic auth setup
+        input("Polygon requires an API key (https://polygon.io/dashboard/keys). You will be asked " \
+        "to paste your key in the next step. It will be stored for future use based on your instantiation " \
+        "parameters (stored on local machine or your private github). Press enter to start.")
+        key = input("Enter key: ")
 
-            self._auth_data = {
-                "key": key
-            }
-            
-            # Write auth data to user specified storage
-            self.kM.force_update_key_data(self._auth_data)
-            print("Basic auth data has been set up successfully.")
+        self._auth_data = {
+            "key": key
+        }
+        
+        # Write auth data to user specified storage
+        self.kM.force_update_key_data(self._auth_data)
+        print("Authentication has been set up successfully.")
 
     def _make_api_call(self, url):
         """
