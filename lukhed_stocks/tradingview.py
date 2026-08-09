@@ -96,7 +96,7 @@ class TradingView:
 
         e.g. filter_column_vs_column("close", "egreater", "SMA50") for
         "price above the 50-day average" -- a comparison the screener supports
-        directly and which the new-high/low screens already rely on.
+        directly.
         """
         return {"left": left, "operation": operation, "right": right_column}
 
@@ -302,9 +302,7 @@ class TradingView:
             "range": [0, 25000]
         }
 
-        # Send the POST request. Retried on rate limiting and 5xx, because a
-        # single hiccup here can take down a whole batch of screens -- the
-        # after-market job issues 18 of them in a row.
+        # Send the POST request. Retried on rate limiting and 5xx
         url = self.screener_url
         response = None
         last_error = None
@@ -354,8 +352,7 @@ class TradingView:
                 status_code=200, attempts=self.max_retries)
 
         if not isinstance(data, dict) or "data" not in data:
-            # A 200 with the wrong shape is the failure mode a silent upstream
-            # change produces. Treat it as an error rather than as no results.
+            # A 200 with the wrong shape is the failure mode. Treat it as an error rather than as no results.
             return self._fail(
                 "TradingView returned HTTP 200 without a `data` key -- the "
                 "response shape changed or the request was rejected upstream.",
