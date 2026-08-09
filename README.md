@@ -354,7 +354,44 @@ No authentication required. The wrapper provides access to TradingView's stock s
 from lukhed_stocks.tradingview import TradingView
 
 tv = TradingView()
+
+# All options, with their defaults:
+tv = TradingView(
+    market="america",       # which scanner; see "Other markets" below
+    timeout=20,             # seconds before a request is abandoned
+    max_retries=3,          # retried on 429 and 5xx, honouring Retry-After
+    backoff=1.5,            # exponential factor between attempts
+    min_interval=0.0,       # min seconds between requests from this object
+    raise_on_error=False,   # see "Error handling" below
+)
 ```
+
+### Error handling
+By default a failed request returns `{"error": True, "statusCode": ..., "message": ...,
+"data": []}` **Check `error` before using the result.** If you would rather it be loud, pass `raise_on_error=True`
+and a `ScreenerError` is raised instead:
+
+```python
+from lukhed_stocks.tradingview import TradingView, ScreenerError
+
+tv = TradingView(raise_on_error=True)
+try:
+    data = tv.screener_get_all_stocks()
+except ScreenerError as exc:
+    print(exc, exc.status_code, exc.attempts)
+```
+
+A `200` carrying a non-JSON body, or one with no `data` key, is treated as an error
+rather than as an empty result — that is what an upstream change looks like, and it
+should not read as "the market has no stocks today".
+
+### Other markets
+`market` selects the scanner and derives both the URL and the payload's `markets`
+field, so `TradingView(market="crypto")` hits
+`https://scanner.tradingview.com/crypto/scan`. **The built-in column and filter
+defaults are written for `america`**the crypto, forex and futures scanners publish
+different field names, so call `clear_screener_columns()` and define columns
+explicitly after switching, or use `set_market()` and do the same.
 
 ### Basic Usage Examples
 ```python
@@ -416,7 +453,14 @@ custom_filter = {
     "operation": "egreater",
     "right": 1000000000
 }
-tv.add_screener_filters(custom_filter)
+tv.add_screener_filter_to_filter(custom_filter)
+
+tv.add_screener_filter_to_filter([
+    TradingView.filter_column_vs_value("close", "egreater", 15),
+    TradingView.filter_column_vs_column("close", "egreater", "SMA50"),
+])
+
+# Filters accumulate on the instance -- clear or reset between screens.
 
 # Reset filters to default
 tv.reset_screener_filters()

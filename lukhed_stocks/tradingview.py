@@ -3,17 +3,109 @@ from lukhed_basic_utils import timeCommon as tC
 from lukhed_basic_utils import listWorkCommon as lC
 from lukhed_basic_utils import mathCommon as mC
 import json
+import time
+
+
+class ScreenerError(RuntimeError):
+    """A screener request that did not come back usable.
+
+    Only raised when the TradingView object was constructed with
+    raise_on_error=True. The default stays the historical dict-with-an-error-key
+    so existing callers are unaffected.
+    """
+
+    def __init__(self, message, status_code=None, attempts=None):
+        super().__init__(message)
+        self.status_code = status_code
+        self.attempts = attempts
 
 
 class TradingView:
-    def __init__(self):
+    # Retried: rate limiting, and the 5xx family. A 4xx other than 429 means the
+    # payload is wrong, and sending it again more slowly will not fix it.
+    RETRY_STATUS = (429, 500, 502, 503, 504)
+
+    def __init__(self, market="america", timeout=20, max_retries=3, backoff=1.5,
+                 min_interval=0.0, raise_on_error=False):
+        """
+        :param market:          str(), the scanner to query. "america" is the
+                                default and the only one the built-in column and
+                                filter defaults are written for -- the crypto,
+                                forex and futures scanners use different column
+                                vocabularies, so clear and redefine columns
+                                explicitly when pointing at one of those.
+        :param timeout:         int(), seconds before a request is abandoned.
+                                Previously there was none, so a hung socket
+                                blocked the caller indefinitely.
+        :param max_retries:     int(), total attempts per request.
+        :param backoff:         float(), exponential factor between attempts.
+                                Retry-After is honoured when the server sends it.
+        :param min_interval:    float(), minimum seconds between requests from
+                                this object. 0 keeps the historical behaviour;
+                                set it when issuing many screens in a loop.
+        :param raise_on_error:  bool(), raise ScreenerError instead of returning
+                                {"error": True, ...}. Defaults to False to keep
+                                the existing contract. Recommended for new code:
+                                the error dict has no "data" key, so a caller
+                                that does not check it fails later with a
+                                KeyError that points at the wrong line.
+        """
         self.screener_filter = None
         self.screener_filter2 = None
         self.screener_columns = None
 
+        self.market = market
+        self.timeout = timeout
+        self.max_retries = max(1, int(max_retries))
+        self.backoff = backoff
+        self.min_interval = min_interval
+        self.raise_on_error = raise_on_error
+        self._last_request_at = None
+
         self._default_screener_columns()
         self._default_screener_filters()
         self.index_lookup = self._get_index_lookup()
+
+    def set_market(self, market):
+        """Point this object at a different TradingView scanner.
+
+        The column and filter defaults are the america ones; other scanners
+        publish different fields, so call clear_screener_columns() and define
+        columns explicitly after switching.
+        """
+        self.market = market
+        return self.market
+
+    @property
+    def screener_url(self):
+        return f"https://scanner.tradingview.com/{self.market}/scan"
+
+    @staticmethod
+    def filter_column_vs_value(left, operation, value):
+        """A filter comparing a column against a literal.
+
+        The wire format puts both cases in the same "right" key, so a bare dict
+        gives no hint whether "SMA50" is a number or a column name. These two
+        helpers make the call site say which was meant.
+        """
+        return {"left": left, "operation": operation, "right": value}
+
+    @staticmethod
+    def filter_column_vs_column(left, operation, right_column):
+        """A filter comparing two of the scanner's own columns.
+
+        e.g. filter_column_vs_column("close", "egreater", "SMA50") for
+        "price above the 50-day average" -- a comparison the screener supports
+        directly.
+        """
+        return {"left": left, "operation": operation, "right": right_column}
+
+    def _throttle(self):
+        if not self.min_interval or self._last_request_at is None:
+            return
+        wait = self.min_interval - (time.monotonic() - self._last_request_at)
+        if wait > 0:
+            time.sleep(wait)
 
     def _default_screener_columns(self):
         self.screener_columns = [
@@ -164,7 +256,14 @@ class TradingView:
             }
         )
 
-    def _screener_make_request(self, add_filters=None, index=None):
+    def _fail(self, message, status_code=None, attempts=None):
+        if self.raise_on_error:
+            raise ScreenerError(message, status_code=status_code, attempts=attempts)
+        return {"error": True, "statusCode": status_code,
+                "message": message, "attempts": attempts, "data": []}
+
+    def _screener_make_request(self, add_filters=None, index=None,
+                               add_key_pairs_to_data=None):
         # Create a session and set user-agent
         session = rC.create_new_session(add_user_agent=True)
 
@@ -172,7 +271,7 @@ class TradingView:
         headers = {
             "authority": "scanner.tradingview.com",
             "method": "POST",
-            "path": "/america/scan",
+            "path": f"/{self.market}/scan",
             "scheme": "https",
             "origin": "https://www.tradingview.com",
             "referer": "https://www.tradingview.com/",
@@ -196,44 +295,95 @@ class TradingView:
             "filter": self.screener_filter,
             "filter2": self.screener_filter2,
             "options": {"lang": "en"},
-            "markets": ["america"],
+            "markets": [self.market],
             "symbols": base_index_filter,
             "columns": self.screener_columns,
             "sort": {"sortBy": "market_cap_basic", "sortOrder": "desc"},
             "range": [0, 25000]
         }
 
-        # Send the POST request
-        url = "https://scanner.tradingview.com/america/scan"
-        retrieval_time = tC.create_timestamp()
-        response = session.post(url, headers=headers, json=payload)
+        # Send the POST request. Retried on rate limiting and 5xx
+        url = self.screener_url
+        response = None
+        last_error = None
 
-        # Check the response
-        if response.status_code == 200:
+        for attempt in range(1, self.max_retries + 1):
+            self._throttle()
+            retrieval_time = tC.create_timestamp()
+            try:
+                response = session.post(url, headers=headers, json=payload,
+                                        timeout=self.timeout)
+            except Exception as exc:          # connection reset, DNS, timeout
+                last_error = f"{type(exc).__name__}: {exc}"
+                response = None
+            finally:
+                self._last_request_at = time.monotonic()
+
+            if response is not None and response.status_code == 200:
+                break
+
+            if response is not None:
+                last_error = f"HTTP {response.status_code}"
+                if response.status_code not in self.RETRY_STATUS:
+                    break                     # a bad payload will stay bad
+
+            if attempt < self.max_retries:
+                delay = self.backoff ** (attempt - 1)
+                if response is not None:
+                    # Honour the server's own pacing when it sends one.
+                    try:
+                        delay = max(delay, float(response.headers.get("Retry-After", 0)))
+                    except (TypeError, ValueError):
+                        pass
+                time.sleep(delay)
+
+        if response is None or response.status_code != 200:
+            status = response.status_code if response is not None else None
+            return self._fail(
+                f"TradingView {self.market} screener request failed after "
+                f"{self.max_retries} attempt(s): {last_error}",
+                status_code=status, attempts=self.max_retries)
+
+        try:
             data = json.loads(response.text)
-            data.update({"error": False, "statusCode": 200})
+        except json.JSONDecodeError as exc:
+            return self._fail(
+                f"TradingView returned HTTP 200 with a body that is not JSON: {exc}",
+                status_code=200, attempts=self.max_retries)
 
-            # Format the data
-            i = 0
-            new_data = []
-            while i < len(data['data']):
-                a = 0
-                temp_data = data['data'][i]['d']
-                temp_dict = {}
-                while a < len(self.screener_columns):
-                    temp_dict[self.screener_columns[a]] = temp_data[a]
-                    a = a + 1
+        if not isinstance(data, dict) or "data" not in data:
+            # A 200 with the wrong shape is the failure mode. Treat it as an error rather than as no results.
+            return self._fail(
+                "TradingView returned HTTP 200 without a `data` key -- the "
+                "response shape changed or the request was rejected upstream.",
+                status_code=200, attempts=self.max_retries)
 
-                new_data.append(temp_dict.copy())
-                i = i + 1
+        data.update({"error": False, "statusCode": 200})
 
-            data['data'] = new_data
-            data['date'] = retrieval_time[0:8]
-            data['retrievalTime'] = retrieval_time
+        # Format the data. Rows arrive as positional arrays aligned to the
+        # columns that were requested, so this zip is order-sensitive.
+        new_data = []
+        for row in data['data']:
+            temp_data = row['d']
+            temp_dict = {}
+            for a in range(len(self.screener_columns)):
+                temp_dict[self.screener_columns[a]] = temp_data[a]
+            new_data.append(temp_dict.copy())
 
-            return data
-        else:
-            return {"error": True, "statusCode": response.status_code}
+        data['data'] = new_data
+        data['date'] = retrieval_time[0:8]
+        data['retrievalTime'] = retrieval_time
+
+        if add_key_pairs_to_data:
+            # Accepts a dict, or the tuple-of-dicts shape the new-high/low
+            # screener has always passed.
+            pairs = ([add_key_pairs_to_data]
+                     if isinstance(add_key_pairs_to_data, dict)
+                     else list(add_key_pairs_to_data))
+            for pair in pairs:
+                data.update(pair)
+
+        return data
 
     def _parse_index_str(self, index_str):
         index_str = index_str.lower()
