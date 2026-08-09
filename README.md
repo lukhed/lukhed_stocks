@@ -455,8 +455,6 @@ custom_filter = {
 }
 tv.add_screener_filter_to_filter(custom_filter)
 
-# `right` may be a literal OR another column name, and the wire format gives no
-# hint which was meant. These helpers make the call site say so:
 tv.add_screener_filter_to_filter([
     TradingView.filter_column_vs_value("close", "egreater", 15),
     TradingView.filter_column_vs_column("close", "egreater", "SMA50"),
