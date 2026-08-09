@@ -368,8 +368,7 @@ tv = TradingView(
 
 ### Error handling
 By default a failed request returns `{"error": True, "statusCode": ..., "message": ...,
-"data": []}` — the historical shape, so existing code is unaffected. **Check `error`
-before using the result.** If you would rather it be loud, pass `raise_on_error=True`
+"data": []}` **Check `error` before using the result.** If you would rather it be loud, pass `raise_on_error=True`
 and a `ScreenerError` is raised instead:
 
 ```python
@@ -390,7 +389,7 @@ should not read as "the market has no stocks today".
 `market` selects the scanner and derives both the URL and the payload's `markets`
 field, so `TradingView(market="crypto")` hits
 `https://scanner.tradingview.com/crypto/scan`. **The built-in column and filter
-defaults are written for `america`** — the crypto, forex and futures scanners publish
+defaults are written for `america`**the crypto, forex and futures scanners publish
 different field names, so call `clear_screener_columns()` and define columns
 explicitly after switching, or use `set_market()` and do the same.
 
