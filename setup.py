@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="lukhed_stocks",
-    version="0.3.2",
+    version="0.3.3",
     description="A collection of stock analysis functions and api wrappers",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
@@ -18,7 +18,7 @@ setup(
         "Operating System :: OS Independent",
     ],
     install_requires=[
-        "lukhed-basic-utils>=1.6.9",
+        "lukhed-basic-utils>=1.6.12",
         "schwab-py>=1.4.0"
     ],
 )

@@ -263,7 +263,7 @@ class TradingView:
                 "message": message, "attempts": attempts, "data": []}
 
     def _screener_make_request(self, add_filters=None, index=None,
-                               add_key_pairs_to_data=None):
+                               add_key_pairs_to_data=None, sort_by="market_cap_basic"):
         # Create a session and set user-agent
         session = rC.create_new_session(add_user_agent=True)
 
@@ -298,7 +298,7 @@ class TradingView:
             "markets": [self.market],
             "symbols": base_index_filter,
             "columns": self.screener_columns,
-            "sort": {"sortBy": "market_cap_basic", "sortOrder": "desc"},
+            "sort": {"sortBy": sort_by, "sortOrder": "desc"},
             "range": [0, 25000]
         }
 
@@ -856,6 +856,49 @@ class TradingView:
 
         self._set_screener_columns(add_to_current_columns, columns_to_add)
 
+    def set_etf_screener_columns(self, add_to_current_columns=False):
+        """
+        This function will set the screener columns to the fund classification fields TradingView publishes for
+        ETFs. Every ETF reports sector "Miscellaneous" and industry "Investment Trusts/Mutual Funds", so these are
+        the only fields that say what an ETF holds and how it is built.
+
+        The ".tr" fields are the readable labels. Their bare counterparts (asset_class, category, focus, niche,
+        leverage, strategy) come back as opaque ids, so they are not requested.
+
+        Stock-only columns (market_cap_basic, earnings, sector, industry) are null or meaningless for an ETF. Add
+        price and technical columns with add_to_current_columns=True or custom_define_columns().
+
+        :return: None
+        """
+
+        columns_to_add = [
+            "name",
+            "description",
+            "type",
+            "typespecs",
+            "exchange",
+            "asset_class.tr",       # Equity, Fixed income, Commodities, Currency (crypto), Alternatives
+            "category.tr",          # e.g. Sector, Precious metals, Pair, Size and style
+            "focus.tr",             # e.g. Information technology, Gold, Long Bitcoin, short USD
+            "niche.tr",             # e.g. Semiconductors, Physically held, In specie
+            "leverage.tr",          # Non-leveraged, Leveraged 2x, Inverse 3x, ...
+            "leverage_ratio",       # None when unleveraged, which includes -1x inverse funds
+            "strategy.tr",          # Vanilla, Buy-write, Active, ...
+            "index_tracked",
+            "brand",
+            "issuer",
+            "aum",
+            "expense_ratio",
+            "etf_holdings_count",
+            "Value.Traded",         # today's dollar volume
+            "launch_date",          # unix seconds
+            "nav",
+            "nav_discount_premium",
+            "fund_flows.1M",
+        ]
+
+        self._set_screener_columns(add_to_current_columns, columns_to_add)
+
     #####################
     # LIVE SCREENERS
     def screener_new_highs_lows(self, new_high_or_low='high', month_time_frame=12):
@@ -901,6 +944,30 @@ class TradingView:
 
     def screener_get_all_stocks(self):
         data = self._screener_make_request()
+        return data
+
+    def screener_get_all_etfs(self):
+        """
+        Get every ETF on the current market, sorted by assets under management.
+
+        The default filters exclude ETFs (filter2 admits funds only when they are not ETFs), so this swaps in an
+        ETF-only filter for the one request and restores whatever filters were set before, even on failure.
+        Columns are left as they are: call set_etf_screener_columns() for the fund classification fields.
+
+        Leveraged, inverse and income funds are all returned. Use leverage.tr and strategy.tr to drop them.
+
+        :return:                        dict(), with a list of ETFs. All ETFs will come with meta data defined
+                                        in self.screener_columns
+        """
+
+        saved_filter, saved_filter2 = self.screener_filter, self.screener_filter2
+        self.screener_filter = [{"left": "typespecs", "operation": "has", "right": ["etf"]}]
+        self.screener_filter2 = None
+        try:
+            data = self._screener_make_request(sort_by="aum")
+        finally:
+            self.screener_filter, self.screener_filter2 = saved_filter, saved_filter2
+
         return data
 
     def screener_get_stocks_by_index(self, index):

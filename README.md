@@ -410,6 +410,27 @@ new_3m_lows = tv.screener_new_highs_lows(new_high_or_low='low', month_time_frame
 all_time_highs = tv.screener_new_highs_lows(new_high_or_low='high', month_time_frame='all time')
 ```
 
+### ETFs
+The default filters exclude ETFs. `screener_get_all_etfs()` swaps in an ETF-only filter for
+one request, restores your filters afterwards, and sorts by assets under management.
+
+Every ETF reports sector "Miscellaneous" and industry "Investment Trusts/Mutual Funds", so
+`set_etf_screener_columns()` adds the fields that say what a fund holds and how it is built:
+`asset_class.tr`, `category.tr`, `focus.tr`, `niche.tr`, `leverage.tr`, `strategy.tr`,
+`index_tracked`, `aum`, `expense_ratio` and a few more.
+
+```python
+tv.custom_define_columns(["close", "EMA50", "EMA150", "EMA200", "Perf.3M"])
+tv.set_etf_screener_columns(add_to_current_columns=True)
+etfs = tv.screener_get_all_etfs()
+
+# Leveraged, inverse and income funds are all returned -- filter them yourself
+plain = [x for x in etfs['data']
+         if x['leverage.tr'] == 'Non-leveraged' and x['strategy.tr'] == 'Vanilla']
+# e.g. SMH -> Equity / Sector / Information technology / Semiconductors
+#      IBIT -> Currency / Pair / Long Bitcoin, short USD / In specie
+```
+
 ### Filtering Stock Lists
 ```python
 # Filter by sector or industry
