@@ -194,7 +194,72 @@ class Robinhood:
 
         return results
 
-    
+    def get_historicals(self, symbols, interval='day', span='5year', bounds='regular', batch_size=25,
+                        timeout=30):
+        """
+        Retrieves OHLCV historical bars for one or more symbols.
+
+        Unlike get_basic_chart_data, which returns the close-price line drawn on robinhood.com, this returns full
+        candles: open, high, low, close and volume. Symbols are requested in batches of `batch_size` per call.
+
+        Parameters
+        ----------
+        symbols : str or list
+            The stock symbol(s) to retrieve bars for.
+        interval : str, optional
+            Bar size, by default 'day'. Options include: '5minute', '10minute', 'hour', 'day', 'week'.
+        span : str, optional
+            How far back to look, by default '5year'. Options include: 'day', 'week', 'month', '3month', 'year',
+            '5year'. Not every interval is available for every span.
+        bounds : str, optional
+            Trading session, by default 'regular'. Options include: 'regular', 'extended', 'trading'.
+        batch_size : int, optional
+            Symbols per request, by default 25.
+        timeout : int, optional
+            Seconds to wait for each request, by default 30. A multi-year batch can take longer than a quote.
+
+        Returns
+        -------
+        dict
+            {SYMBOL: [bar, ...]}, each list ascending by date. A bar is a dict with 'begins_at' (ISO timestamp),
+            'open', 'high', 'low', 'close' (floats), 'volume' (int), 'session' and 'interpolated'. A symbol the
+            endpoint did not return, or returned without bars, is absent from the result rather than present
+            with an empty list, so a missing symbol is never mistaken for one that did not trade.
+        """
+        symbol_list = [s.upper() for s in self._parse_symbol_input(symbols)]
+        url = 'https://api.robinhood.com/marketdata/historicals/'
+
+        out = {}
+        for i in range(0, len(symbol_list), batch_size):
+            batch = symbol_list[i:i + batch_size]
+            r = rC.request_json(
+                url=url,
+                method="GET",
+                params={"symbols": ",".join(batch), "interval": interval, "span": span, "bounds": bounds},
+                add_user_agent=self.add_user_agent,
+                timeout=timeout
+            )
+            if self.api_delay:
+                tC.sleep(self.api_delay)
+
+            for series in (r or {}).get('results') or []:
+                bars = series.get('historicals') or []
+                if not series.get('symbol') or not bars:
+                    continue
+                out[series['symbol'].upper()] = [{
+                    'begins_at': b['begins_at'],
+                    'open': float(b['open_price']),
+                    'high': float(b['high_price']),
+                    'low': float(b['low_price']),
+                    'close': float(b['close_price']),
+                    'volume': int(b['volume']),
+                    'session': b.get('session'),
+                    'interpolated': b.get('interpolated'),
+                } for b in bars]
+
+        return out
+
+
     ###################
     # Lists
     ###################
