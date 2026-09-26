@@ -167,6 +167,22 @@ daily_chart = rh.get_basic_chart_data('AAPL', span='day')
 yearly_chart = rh.get_basic_chart_data('AAPL', span='year', extended_hours=True)
 ```
 
+### Historical Bars (OHLCV)
+`get_basic_chart_data` returns the close-price line shown on robinhood.com. For candles, use
+`get_historicals`, which returns open, high, low, close and volume for one or more symbols,
+batched 25 symbols per request.
+
+```python
+# {SYMBOL: [bar, ...]}, ascending by date
+bars = rh.get_historicals(['AAPL', 'MSFT', 'GLD'], interval='day', span='5year')
+bars['AAPL'][-1]
+# {'begins_at': '2026-09-25T00:00:00Z', 'open': 336.04, 'high': 341.67, 'low': 334.53,
+#  'close': 341.07, 'volume': 30002507, 'session': 'reg', 'interpolated': False}
+
+# A symbol that returns no bars is absent from the result, not an empty list
+weekly = rh.get_historicals('AAPL', interval='week', span='year')
+```
+
 ### Popular Lists
 ```python
 # Get most held stocks on Robinhood
