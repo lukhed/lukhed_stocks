@@ -18,7 +18,7 @@ setup(
         "Operating System :: OS Independent",
     ],
     install_requires=[
-        "lukhed-basic-utils>=1.6.9",
+        "lukhed-basic-utils>=1.6.12",
         "schwab-py>=1.4.0"
     ],
 )
